@@ -1,3 +1,5 @@
+name: Deploy Backed-User App
+
 on:
   push:
     branches:
@@ -9,94 +11,27 @@ on:
         default: 'true'
         required: false
 
+
 jobs:
-  build-and-deploy-app:
-    runs-on: ubuntu-latest
-    env:
-      COMMIT_SHA: ${{ github.sha }}
+  deploy-web-app:
+    uses: Practica-Supervisada-UCR-2025/Repo-DevOps/.github/workflows/deploy-app-reusable-workflow.yml@main
+    with:
+      app_path: "."
+      image_name: "backend-user-app"
+      container_name: "backend-user-app"
+      production_server_port: "3000"
+      program_assigned_port: "3000"
 
-    steps:
-      - uses: actions/checkout@v3
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      DEPLOYMENT_SERVER_HOST: ${{ secrets.DEPLOYMENT_SERVER_HOST }}
+      SERVER_USER: ${{ secrets.SERVER_USER }}
+      SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
 
-      - name: Create firebase credentials.json
-        id: create-firebase-json
-        uses: jsdaniell/create-json@v1.2.3
-        with:
-          name: "firebase-service-account.json"
-          json: ${{ secrets.FIREBASE_CREDENTIALS }}
-          dir: 'src/'
-
-      - name: Docker meta data for image
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            ${{ secrets.DOCKER_USERNAME }}/backend-user-app
-          tags: |
-            type=raw,value=${{ env.COMMIT_SHA }}
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value={{date 'DD/MM/YYYY'}}
-          labels: |
-            org.label-schema.vcs-ref=${{ env.SHORT_SHA }}
-            org.label-schema.vcs-branch=${{ github.head_ref || github.base_ref }}
-            org.label-schema.build-date={{date 'YYYY-MM-DDTHH:mm:ssZ'}}
-            org.label-schema.vcs-url=${{ github.server_url }}/${{ github.repository }}
-
-      - name: Print docker metadata fields
-        run: |
-          echo "First tag: ${{ steps.meta.outputs.tags }}"
-
-      - name: Docker login
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Docker build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Delete all docker artifacts in production server
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.DEPLOYMENT_SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            docker system prune -a -f
-
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.DEPLOYMENT_SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            mkdir -p ~/app
-            # Create the .env file with secrets
-            echo "DB_HOST=${{ secrets.DB_HOST }}" > ~/app/.env
-            echo "DB_USER=${{ secrets.DB_USER }}" >> ~/app/.env
-            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> ~/app/.env
-            echo "DB_NAME=${{ secrets.DB_NAME }}" >> ~/app/.env
-            echo "DB_PORT=${{ secrets.DB_PORT }}" >> ~/app/.env
-            cd ~/app
-            # Pull the built image and run it
-            docker pull ${{ secrets.DOCKER_USERNAME }}/backend-user-app:${{ env.COMMIT_SHA }}
-            docker stop backend-user-app || true
-            docker rm backend-user-app || true
-            docker run --env-file .env -d --name backend-user-app -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/backend-user-app:${{ env.COMMIT_SHA }}
-            # Check the container is up and running, if not then fail workflow
-            if ! docker ps --filter "name=backend-user-app" --filter "status=running" --format '{{.Names}}' | grep -w backend-user-app ; then
-              echo "Container is not running, exiting..."
-              exit 1
-            fi
-
-
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      DB_USER: ${{ secrets.DB_USER }}
+      FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}
