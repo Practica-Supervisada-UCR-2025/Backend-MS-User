@@ -1,4 +1,4 @@
-name: Deploy Backed-User App
+name: Deploy Backend-User App
 
 on:
   push:
