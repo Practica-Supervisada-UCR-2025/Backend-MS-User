@@ -11,7 +11,6 @@ on:
         default: 'true'
         required: false
 
-
 jobs:
   deploy-web-app:
     uses: Practica-Supervisada-UCR-2025/Repo-DevOps/.github/workflows/deploy-app-reusable-workflow.yml@main
