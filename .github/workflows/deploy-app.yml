@@ -1,4 +1,4 @@
-name: Deploy Backend-User App
+name: Deploy Backed-User App
 
 on:
   push:
@@ -11,6 +11,7 @@ on:
         default: 'true'
         required: false
 
+
 jobs:
   deploy-web-app:
     uses: Practica-Supervisada-UCR-2025/Repo-DevOps/.github/workflows/deploy-app-reusable-workflow.yml@main
@@ -20,6 +21,7 @@ jobs:
       container_name: "backend-user-app"
       production_server_port: "3000"
       program_assigned_port: "3000"
+      env_directory: "backend-user-app"
 
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
