@@ -12,7 +12,7 @@ const DEFAULT_PROFILE_PICTURE = 'https://storage.googleapis.com/your-bucket/defa
 async function sendRegistrationConfirmation(email: string, fullName: string, userType: 'mobile' | 'web') {
   try {
     // Para producción, usar: 'http://ms-notification:3001/api/email/send-register-confirmation'
-    await axios.post('http://localhost:3001/api/email/send-register-confirmation', {
+    await axios.post('http://ms-notification:3001/api/email/send-register-confirmation', {
       email,
       full_name: fullName,
       userType
