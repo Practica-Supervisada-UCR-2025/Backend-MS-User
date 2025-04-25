@@ -1,40 +1,39 @@
+name: Deploy Backend-User App
+
 on:
-  pull_request:
+  push:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      build-new-version:
+        description: 'Build now and deploy the app'
+        default: 'true'
+        required: false
+
 
 jobs:
-  build-and-deploy-app:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+  deploy-web-app:
+    uses: Practica-Supervisada-UCR-2025/Repo-DevOps/.github/workflows/deploy-app-reusable-workflow.yml@main
+    with:
+      app_path: "."
+      image_name: "backend-user-app"
+      container_name: "backend-user-app"
+      production_server_port: "3000"
+      program_assigned_port: "3000"
+      env_directory: "backend-user-app"
 
-      - name: Docker login        
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      DEPLOYMENT_SERVER_HOST: ${{ secrets.DEPLOYMENT_SERVER_HOST }}
+      SERVER_USER: ${{ secrets.SERVER_USER }}
+      SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
 
-      - name: Docker build
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/backend-user-app:latest .
-
-      - name: Docker push to docker hub
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/backend-user-app:latest
-
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.DEPLOYMENT_SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            mkdir -p ~/app
-            echo "DB_HOST=${{ secrets.DB_HOST }}" > ~/app/.env
-            echo "DB_USER=${{ secrets.DB_USER }}" >> ~/app/.env
-            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> ~/app/.env
-            echo "DB_NAME=${{ secrets.DB_NAME }}" >> ~/app/.env
-            echo "DB_PORT=${{ secrets.DB_PORT }}" >> ~/app/.env
-            cd ~/app
-            docker pull ${{ secrets.DOCKER_USERNAME }}/backend-user-app:latest
-            docker stop backend-user-app || true
-            docker rm backend-user-app || true
-            docker run --env-file .env -d --name backend-user-app -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/backend-user-app:latest
-
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      DB_USER: ${{ secrets.DB_USER }}
+      FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}

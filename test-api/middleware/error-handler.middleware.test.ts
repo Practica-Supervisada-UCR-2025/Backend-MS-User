@@ -29,7 +29,6 @@ describe('Error Handler Middleware', () => {
 
     expect(mockResponse.status).toHaveBeenCalledWith(400);
     expect(mockResponse.json).toHaveBeenCalledWith({
-      status: 400,
       message: 'Validation Error',
       details: validationError.errors,
     });
@@ -47,13 +46,12 @@ describe('Error Handler Middleware', () => {
 
     expect(mockResponse.status).toHaveBeenCalledWith(404);
     expect(mockResponse.json).toHaveBeenCalledWith({
-      status: 404,
       message: 'Not Found',
       details: ['Invalid ID provided'],
     });
   });
 
-  it('should handle ApiError without details for 401 status', () => {
+  it('should handle Unauthorized Error with details for 401 status', () => {
     const apiError = new ApiError(401, 'Unauthorized', ['Invalid token']);
     
     errorHandler(
@@ -65,9 +63,8 @@ describe('Error Handler Middleware', () => {
 
     expect(mockResponse.status).toHaveBeenCalledWith(401);
     expect(mockResponse.json).toHaveBeenCalledWith({
-      status: 401,
-      message: 'Unauthorized'
-      // No details included for 401 errors
+      message: 'Unauthorized',
+      details: ['Invalid token']
     });
   });
 
@@ -84,7 +81,6 @@ describe('Error Handler Middleware', () => {
 
     expect(mockResponse.status).toHaveBeenCalledWith(401);
     expect(mockResponse.json).toHaveBeenCalledWith({
-      status: 401,
       message: 'Invalid or missing Firebase token',
       details: 'Invalid token',
     });
@@ -103,7 +99,6 @@ describe('Error Handler Middleware', () => {
 
     expect(mockResponse.status).toHaveBeenCalledWith(500);
     expect(mockResponse.json).toHaveBeenCalledWith({
-      status: 500,
       message: 'Internal Server Error',
       details: 'Something went wrong',
     });
@@ -122,7 +117,6 @@ describe('Error Handler Middleware', () => {
 
     expect(mockResponse.status).toHaveBeenCalledWith(500);
     expect(mockResponse.json).toHaveBeenCalledWith({
-      status: 500,
       message: 'Internal Server Error',
       details: undefined,
     });

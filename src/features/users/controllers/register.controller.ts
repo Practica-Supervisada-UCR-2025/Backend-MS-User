@@ -18,7 +18,6 @@ export const registerUserController = async (
 
     const result = await registerUserService(validatedData);
     res.status(201).json({
-      status: result.status,
       message: result.message
     });
   } catch (error) {
@@ -48,7 +47,6 @@ export const registerAdminController = async (
     }
     const result = await registerAdminService(validatedData, req.user.role);
     res.status(201).json({
-      status: result.status,
       message: result.message
     });
   } catch (error) {

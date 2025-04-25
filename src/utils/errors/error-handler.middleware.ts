@@ -13,7 +13,6 @@ export const errorHandler: ErrorRequestHandler = (
   // Handle Yup validation errors
   if (error instanceof ValidationError) {
     res.status(400).json({
-      status: 400,
       message: 'Validation Error',
       details: error.errors
     });
@@ -22,12 +21,11 @@ export const errorHandler: ErrorRequestHandler = (
 
   // Handle our custom API errors
   if (error instanceof ApiError) {
-    const response: { status: number; message: string; details?: any } = {
-      status: error.status,
+    const response: { message: string; details?: any } = {
       message: error.message
     };
     // Only include details if they exist and it's not an unauthorized error
-    if (error.details && error.status !== 401) {
+    if (error.details) {
       response.details = error.details;
     }
     res.status(error.status).json(response);
@@ -37,7 +35,6 @@ export const errorHandler: ErrorRequestHandler = (
   // Handle Firebase auth errors
   if (error.name === 'FirebaseAuthError') {
     res.status(401).json({
-      status: 401,
       message: 'Invalid or missing Firebase token',
       details: error.message
     });
@@ -46,7 +43,6 @@ export const errorHandler: ErrorRequestHandler = (
 
   // Handle unknown errors
   res.status(500).json({
-    status: 500,
     message: 'Internal Server Error',
     details: process.env.NODE_ENV === 'development' ? error.message : undefined
   });

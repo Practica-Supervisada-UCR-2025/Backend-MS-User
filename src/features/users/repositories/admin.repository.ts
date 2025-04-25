@@ -8,9 +8,9 @@ export const findByEmailAdmin = async (email: string) => {
 
 export const createAdmin = async (admin: AdminUser) => {
   const result = await client.query(`
-    INSERT INTO admin_users (id, email, full_name, is_active, created_at)
-    VALUES ($1, $2, $3, $4, NOW())`,
-    [admin.id, admin.email, admin.full_name, admin.is_active]
+    INSERT INTO admin_users (id, email, full_name, auth_id, is_active, created_at)
+    VALUES ($1, $2, $3, $4, $5, NOW())`,
+    [admin.id, admin.email, admin.full_name, admin.auth_id, admin.is_active]
   );
   return result.rows[0];
 };

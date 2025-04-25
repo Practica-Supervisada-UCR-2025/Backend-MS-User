@@ -73,7 +73,6 @@ describe('Register Controller Integration Tests', () => {
         .expect(201);
 
       expect(response.body).toEqual({
-        status: 201,
         message: 'User registered successfully.'
       });
     });
@@ -93,7 +92,6 @@ describe('Register Controller Integration Tests', () => {
         .expect(409);
 
       expect(response.body).toEqual({
-        status: 409,
         message: 'Email already registered'
       });
     });
@@ -124,7 +122,6 @@ describe('Register Controller Integration Tests', () => {
         .expect(201);
 
       expect(response.body).toEqual({
-        status: 201,
         message: 'Admin registered successfully.'
       });
     });
@@ -135,7 +132,6 @@ describe('Register Controller Integration Tests', () => {
         .send(validAdminData)
         .expect(401)
         .expect({
-          status: 401,
           message: 'Unauthorized'
         });
     });

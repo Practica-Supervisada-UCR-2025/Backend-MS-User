@@ -2,7 +2,7 @@ import { Pool } from 'pg';
 import * as dotenv from 'dotenv';
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: '.env.test' });
 
 // Mock Firebase Admin
 jest.mock('../src/config/firebase', () => {
