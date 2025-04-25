@@ -16,13 +16,13 @@ describe('POST /api/recover-password', () => {
 
     const response = await request(app)
       .post('/api/recover-password')
-      .send({ email: 'user@example.com' });
+      .send({ email: 'userTest@ucr.ac.cr' });
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
       message: 'Recovery email sent to user@example.com',
     });
-    expect(mockGenerateLink).toHaveBeenCalledWith('user@example.com');
+    expect(mockGenerateLink).toHaveBeenCalledWith('userTest@ucr.ac.cr');
   });
 
   it('should respond with 400 for invalid email format', async () => {
@@ -32,7 +32,7 @@ describe('POST /api/recover-password', () => {
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({
-      error: 'Invalid email format',
+      error: 'Formato de email incorrecto. Asegurate que sea el correo institucional.',
     });
   });
 
@@ -41,11 +41,11 @@ describe('POST /api/recover-password', () => {
 
     const response = await request(app)
       .post('/api/recover-password')
-      .send({ email: 'user@example.com' });
+      .send({ email: 'user@ucr.ac.cr' });
 
     expect(response.status).toBe(500);
     expect(response.body).toEqual({
-      error: 'Could not send recovery email',
+      error: 'No se logró enviar el correo de recuperación. Verifica que el correo sea el correcto.',
     });
   });
 });

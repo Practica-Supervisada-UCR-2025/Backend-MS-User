@@ -19,12 +19,12 @@ describe('Forgot Password Controller', () => {
 
   it('should return 200 and success message when email is valid', async () => {
     const message = 'Recovery email sent to user@example.com';
-    req.body.email = 'user@example.com';
+    req.body.email = 'userTest@ucr.ac.cr';
     mockGeneratePasswordResetLink.mockResolvedValueOnce(message);
 
     await sendRecoveryLink(req, res);
 
-    expect(mockGeneratePasswordResetLink).toHaveBeenCalledWith('user@example.com');
+    expect(mockGeneratePasswordResetLink).toHaveBeenCalledWith('userTest@ucr.ac.cr');
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ message });
   });
@@ -35,17 +35,17 @@ describe('Forgot Password Controller', () => {
     await sendRecoveryLink(req, res);
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Invalid email format' });
+    expect(res.json).toHaveBeenCalledWith({ error: 'Formato de email incorrecto. Asegurate que sea el correo institucional.' });
   });
 
   it('should return 500 and error message on failure', async () => {
     const error = new Error('Something went wrong');
-    req.body.email = 'user@example.com';
+    req.body.email = 'userTest@ucr.ac.cr';
     mockGeneratePasswordResetLink.mockRejectedValueOnce(error);
 
     await sendRecoveryLink(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Could not send recovery email' });
+    expect(res.json).toHaveBeenCalledWith({ error: 'No se logró enviar el correo de recuperación. Verifica que el correo sea el correcto.' });
   });
 });

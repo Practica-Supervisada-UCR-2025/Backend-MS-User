@@ -10,23 +10,16 @@ export async function generatePasswordResetLink(email: string): Promise<string> 
     // 1. Generate the password reset link
     const recoveryLink = await admin.auth().generatePasswordResetLink(email);
 
-    //Once its up on the server:
-    // 2. Send it to MS-Notification
-      // await axios.post('http://ms-notification:3001/send-password-reset', {
-      //   email,
-      //   recoveryLink,
-      // });
 
-    // For local testing
-    await axios.post('http://localhost:3001/send-password-reset', {
+    await axios.post(' http://157.230.224.13:3002/api/email/send-password-reset', {
       email,
       recoveryLink,
     });
     
 
-    return `Recovery email sent to ${email}`;
+    return `Se envio el correo de recuperación a ${email}.Sigue las instrucciones en el correo para restablecer tu contraseña.`;
   } catch (error) {
     console.log('[generatePasswordResetLink] Error:', error);
-    throw new Error('Failed to generate or send recovery link');
+    throw new Error('El correo electrónico no es válido o no está registrado.');
   }
 }

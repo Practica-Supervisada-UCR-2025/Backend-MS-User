@@ -4,7 +4,7 @@ import { validate } from 'class-validator';
 describe('SendRecoveryLinkDto', () => {
   it('should pass validation with a valid email', async () => {
     const dto = new SendRecoveryLinkDto();
-    dto.email = 'user@example.com';
+    dto.email = 'user@ucr.ac.cr';
 
     const errors = await validate(dto);
 
