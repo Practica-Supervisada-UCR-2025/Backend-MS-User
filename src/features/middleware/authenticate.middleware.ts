@@ -48,15 +48,15 @@ export const validateAuth = async (
 ) => {
   try {
     // Validate Firebase token from body
-    const { firebaseToken } = req.body;
-    if (!firebaseToken) {
-      throw new UnauthorizedError('Unauthorized');
+    const { auth_token } = req.body;
+    if (!auth_token) {
+      throw new UnauthorizedError('Unauthorized', ['No auth token provided']);
     }
 
     await admin.auth()
-      .verifyIdToken(firebaseToken)
+      .verifyIdToken(auth_token)
       .catch(() => {
-        throw new UnauthorizedError('Unauthorized');
+        throw new UnauthorizedError('Unauthorized', ['Invalid auth token']);
       });
 
     next();

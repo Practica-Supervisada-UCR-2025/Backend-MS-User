@@ -4,6 +4,7 @@
   "description": "~A great repository for the Backend~",
   "main": "index.js",
   "scripts": {
+    "build": "tsc",
     "start": "npx ts-node src/app",
     "test": "cross-env NODE_ENV=test jest",
     "test:coverage": "cross-env NODE_ENV=test jest --coverage",

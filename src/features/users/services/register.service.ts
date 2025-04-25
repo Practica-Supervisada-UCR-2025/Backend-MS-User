@@ -5,8 +5,24 @@ import { createAdmin, findByEmailAdmin} from '../repositories/admin.repository';
 // import { sendVerificationEmail } from '../../../utils/notificationClient';
 import { v4 as uuidv4 } from 'uuid';
 import { UnauthorizedError, ConflictError, InternalServerError } from '../../../utils/errors/api-error';
+import axios from 'axios';
 
 const DEFAULT_PROFILE_PICTURE = 'https://storage.googleapis.com/your-bucket/default-avatar.png';  // Update with your actual default image URL
+
+async function sendRegistrationConfirmation(email: string, fullName: string, userType: 'mobile' | 'web') {
+  try {
+    // Para producción, usar: 'http://ms-notification:3001/api/email/send-register-confirmation'
+    await axios.post('http://localhost:3001/api/email/send-register-confirmation', {
+      email,
+      full_name: fullName,
+      userType
+    });
+    console.log(`Registration confirmation sent to ${email}`);
+  } catch (error) {
+    console.error('Error sending registration confirmation:', error);
+    // No lanzamos error para que el registro sea exitoso incluso si falla la notificación
+  }
+}
 
 export const registerUserService = async (dto: RegisterDTO) => {
   try {
@@ -24,16 +40,18 @@ export const registerUserService = async (dto: RegisterDTO) => {
       username: dto.email.split('@')[0],
       profile_picture: DEFAULT_PROFILE_PICTURE,
       auth_id: dto.auth_id,
-      auth_token: dto.auth_token,
       is_active: true,
       created_at: new Date(),
-      last_login: null,
+      last_login: null
     };
     
     // crear en DB
     await createUser(user);
 
-    return { status: 201, message: 'User registered successfully.' };
+    // Enviar confirmación de registro
+    await sendRegistrationConfirmation(dto.email, dto.full_name, 'mobile');
+
+    return {message: 'User registered successfully.' };
 
   } catch (error) {
     console.error('Error in registerUser service:', error);
@@ -61,7 +79,6 @@ export const registerAdminService = async (dto: RegisterDTO, role: string) => {
       email: dto.email,
       full_name: dto.full_name,
       auth_id: dto.auth_id,
-      auth_token: dto.auth_token,
       is_active: true,
       created_at: new Date(),
       last_login: null
@@ -70,7 +87,10 @@ export const registerAdminService = async (dto: RegisterDTO, role: string) => {
     // crear en DB
     await createAdmin(adminUser);
 
-    return { status: 201, message: 'Admin registered successfully.' };
+    // Enviar confirmación de registro
+    await sendRegistrationConfirmation(dto.email, dto.full_name, 'web');
+
+    return {message: 'Admin registered successfully.' };
 
   } catch (error) {
     console.error('Error in registerAdmin service:', error);
