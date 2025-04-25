@@ -11,7 +11,7 @@ jest.mock('axios');
 const mockedAxiosPost = axios.post as jest.Mock;
 
 describe('generatePasswordResetLink with static mock', () => {
-  const email = 'user@example.com';
+  const email = 'userTest@ucr.ac.cr';
   const recoveryLink = 'https://mock-reset-link.com';
 
   beforeEach(() => {
@@ -26,16 +26,16 @@ describe('generatePasswordResetLink with static mock', () => {
 
     expect(mockAdmin.auth().generatePasswordResetLink).toHaveBeenCalledWith(email);
     expect(mockedAxiosPost).toHaveBeenCalledWith(
-      'http://localhost:3001/send-password-reset',
+      ' http://157.230.224.13:3002/api/email/send-password-reset',
       { email, recoveryLink }
     );
-    expect(result).toBe(`Recovery email sent to ${email}`);
+    expect(result).toBe(`Se envio el correo de recuperación a userTest@ucr.ac.cr.Sigue las instrucciones en el correo para restablecer tu contraseña.`);
   });
 
   it('should throw an error if Firebase generatePasswordResetLink fails', async () => {
     mockAdmin.auth().generatePasswordResetLink.mockRejectedValueOnce(new Error('Firebase error'));
 
-    await expect(generatePasswordResetLink(email)).rejects.toThrow('Failed to generate or send recovery link');
+    await expect(generatePasswordResetLink(email)).rejects.toThrow('El correo electrónico no es válido o no está registrado.');
     expect(mockedAxiosPost).not.toHaveBeenCalled();
   });
 
@@ -43,7 +43,7 @@ describe('generatePasswordResetLink with static mock', () => {
     mockAdmin.auth().generatePasswordResetLink.mockResolvedValueOnce(recoveryLink);
     mockedAxiosPost.mockRejectedValueOnce(new Error('Axios error'));
 
-    await expect(generatePasswordResetLink(email)).rejects.toThrow('Failed to generate or send recovery link');
+    await expect(generatePasswordResetLink(email)).rejects.toThrow('El correo electrónico no es válido o no está registrado.');
   });
   
 });
