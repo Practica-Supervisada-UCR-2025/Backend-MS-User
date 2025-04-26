@@ -19,7 +19,12 @@ export async function generatePasswordResetLink(email: string): Promise<string> 
 
     return `Se envio el correo de recuperación a ${email}.Sigue las instrucciones en el correo para restablecer tu contraseña.`;
   } catch (error) {
-    console.log('[generatePasswordResetLink] Error:', error);
-    throw new Error('El correo electrónico no es válido o no está registrado.');
-  }
+    console.error('[generatePasswordResetLink] Error:', error);
+    
+    if (error instanceof Error) {
+      throw new Error(`El correo electrónico no es válido o no está registrado. Detalle: ${error.message}`);
+    } else {
+      throw new Error(`El correo electrónico no es válido o no está registrado. Detalle: ${String(error)}`);
+    }
+  }  
 }
