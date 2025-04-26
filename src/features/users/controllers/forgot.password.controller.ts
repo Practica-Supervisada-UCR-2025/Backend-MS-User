@@ -18,6 +18,10 @@ export const sendRecoveryLink = async (req: Request, res: Response): Promise<voi
     res.status(200).json({ message: result });
   } catch (err) {
     console.error('[Error sending recovery link]', err);
-    res.status(500).json({ error: 'No se logró enviar el correo de recuperación. Verifica que el correo sea el correcto.' });
+    res.status(500).json({ 
+      error: 'No se logró enviar el correo de recuperación.',
+      detail: err instanceof Error ? err.message : String(err)
+    });
   }
+  
 };
