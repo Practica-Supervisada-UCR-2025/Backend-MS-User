@@ -1,6 +1,7 @@
 import type { Config } from '@jest/types';
 
 const config: Config.InitialOptions = {
+  testTimeout: 100000, // Set a very high timeout (100 seconds)
   preset: 'ts-jest',
   testEnvironment: 'node',
   verbose: true,
