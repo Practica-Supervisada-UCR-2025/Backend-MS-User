@@ -11,7 +11,7 @@ export async function generatePasswordResetLink(email: string): Promise<string> 
     const recoveryLink = await admin.auth().generatePasswordResetLink(email);
 
 
-    await axios.post(' http://157.230.224.13:3002/api/email/send-password-reset', {
+    await axios.post('http://backend-notification-app:3001/api/email/send-password-reset', {
       email,
       recoveryLink,
     });
