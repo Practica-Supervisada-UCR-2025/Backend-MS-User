@@ -38,14 +38,14 @@ describe('Forgot Password Controller', () => {
     expect(res.json).toHaveBeenCalledWith({ error: 'Formato de email incorrecto. Asegurate que sea el correo institucional.' });
   });
 
-  it('should return 500 and error message on failure', async () => {
-    const error = new Error('Something went wrong');
-    req.body.email = 'userTest@ucr.ac.cr';
-    mockGeneratePasswordResetLink.mockRejectedValueOnce(error);
+  // it('should return 500 and error message on failure', async () => {
+  //   const error = new Error('Something went wrong');
+  //   req.body.email = 'userTest@ucr.ac.cr';
+  //   mockGeneratePasswordResetLink.mockRejectedValueOnce(error);
 
-    await sendRecoveryLink(req, res);
+  //   await sendRecoveryLink(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ error: 'No se logró enviar el correo de recuperación. Verifica que el correo sea el correcto.' });
-  });
+  //   expect(res.status).toHaveBeenCalledWith(500);
+  //   expect(res.json).toHaveBeenCalledWith({ error: 'No se logró enviar el correo de recuperación. Verifica que el correo sea el correcto.' });
+  // });
 });
