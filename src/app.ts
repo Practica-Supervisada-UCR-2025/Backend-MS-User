@@ -4,6 +4,8 @@ import systemRoutes from './features/system/routes/system.routes';
 import { errorHandler } from './utils/errors/error-handler.middleware';
 import authRoutes from './features/users/routes/login.routes';
 import forgotPasswordRoutes from './features/users/routes/forgot.password.routes';
+import cors from "cors";
+
 export const app = express();
 const PORT = 3000;
 
@@ -13,11 +15,11 @@ app.get('/', (req, res) => {
 });
 
 app.use(express.json());
+app.use(cors());
 app.use('/api', registerRoutes);
 app.use('/api', authRoutes);
 app.use('/api/system', systemRoutes);
 app.use('/api', forgotPasswordRoutes);
-
 // Error handling middleware should be last
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     errorHandler(err, req, res, next);
