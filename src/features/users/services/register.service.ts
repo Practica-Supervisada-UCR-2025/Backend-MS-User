@@ -78,6 +78,7 @@ export const registerAdminService = async (dto: RegisterDTO, role: string) => {
       id: uuidv4(),
       email: dto.email,
       full_name: dto.full_name,
+      profile_picture: DEFAULT_PROFILE_PICTURE,
       auth_id: dto.auth_id,
       is_active: true,
       created_at: new Date(),
