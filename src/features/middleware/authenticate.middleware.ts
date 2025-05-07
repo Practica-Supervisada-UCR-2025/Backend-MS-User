@@ -29,6 +29,11 @@ export const authenticateJWT = (req: Request, res: Response, next: NextFunction)
 
     // Validate and set role to either 'user' or 'admin'
     const validRole = decoded.role === 'admin' ? 'admin' : 'user';
+    const email = decoded.email;
+
+    if (!email) {
+      throw new UnauthorizedError('Unauthorized', ['Not registered user']);
+    }
     
     // Convertimos el req a AuthenticatedRequest al inyectar la propiedad user
     (req as AuthenticatedRequest).user = {

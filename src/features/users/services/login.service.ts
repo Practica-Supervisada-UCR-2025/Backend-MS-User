@@ -25,10 +25,20 @@ export const loginUserService = async (firebaseToken: string) => {
       throw new UnauthorizedError('Unauthorized', ['Not registered user']);
     }
 
+    if (!existingUser.is_active) {
+      throw new UnauthorizedError('Unauthorized', ['User is inactive']);
+    }
+
+    if (existingUser.id === null) {
+      throw new UnauthorizedError('Unauthorized', ['Not registered user']);
+    }
+
     // Generate JWT token
     const jwtService = new JwtService();
     const token = jwtService.generateToken({
-      role: 'user'
+      role: 'user',
+      email: email, // Include email in the token payload for future requests
+      uuid: existingUser.id // Include UUID in the token payload for future requests
     });
 
     return {
@@ -62,13 +72,23 @@ export const loginAdminService = async (firebaseToken: string) => {
     if (!existingAdmin) {
       throw new UnauthorizedError('Unauthorized', ['Not registered admin']);
     }
+
+    if (!existingAdmin.is_active) {
+      throw new UnauthorizedError('Unauthorized', ['User is inactive']);
+    }
+
+    if (existingAdmin.id === null) {
+      throw new UnauthorizedError('Unauthorized', ['Not registered user']);
+    }
     
-    console.log('Successful verification. Admin:', decoded.uid, 'Email:', email);
+    console.log('Successful verification. Admin:', decoded.uid, 'Email:', email, existingAdmin.id);
 
     // Generate JWT token
     const jwtService = new JwtService();
     const token = jwtService.generateToken({
-      role: 'admin'
+      role: 'admin',
+      email: email, // Include email in the token payload for future requests
+      uuid: existingAdmin.id // Include UUID in the token payload for future requests
     });
 
     return {
