@@ -7,6 +7,8 @@ dotenv.config();
 
 interface Payload {
   role: string;
+  email: string; // For future request to database based on email
+  uuid: string;
 }
 
 export class JwtService {
@@ -30,6 +32,14 @@ export class JwtService {
       // Validate role is either 'user' or 'admin'
       if (decoded.role !== 'user' && decoded.role !== 'admin') {
         throw new UnauthorizedError('Invalid role in token');
+      }
+
+      if (!decoded.email) {
+        throw new UnauthorizedError('Unauthorized', ['Not registered user']);
+      }
+
+      if (!decoded.uuid) {
+        throw new UnauthorizedError('Unauthorized', ['Not registered user']);
       }
       return decoded;
     } catch (error) {
