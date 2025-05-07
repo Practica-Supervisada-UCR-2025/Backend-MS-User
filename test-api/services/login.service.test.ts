@@ -46,7 +46,7 @@ describe('Auth Service', () => {
 
     it('should return a JWT token containing role=user, containing uuid and email', async () => {
       mockVerifyIdToken.mockResolvedValueOnce({ email: 'user@ucr.ac.cr', uid: 'user123' });
-      (findByEmailUser as jest.Mock).mockResolvedValueOnce({ id: '123', email: 'user@ucr.ac.cr', is_active: true});
+      (findByEmailUser as jest.Mock).mockResolvedValueOnce({ id: '123', email: 'user@ucr.ac.cr', is_active: true });
 
       const result = await loginUserService('valid-token');
 
@@ -62,6 +62,20 @@ describe('Auth Service', () => {
       expect(decoded.role).toBe('user');
       expect(decoded).toHaveProperty('email');
       expect(decoded).toHaveProperty('uuid');
+    });
+
+    it('should throw UnauthorizedError if user is inactive', async () => {
+      mockVerifyIdToken.mockResolvedValueOnce({ email: 'user@ucr.ac.cr', uid: '123' });
+      (findByEmailUser as jest.Mock).mockResolvedValueOnce({ id: '123', email: 'user@ucr.ac.cr', is_active: false });
+
+      await expect(loginUserService('valid-token')).rejects.toThrow(UnauthorizedError);
+    });
+
+    it('should throw UnauthorizedError if user ID is null', async () => {
+      mockVerifyIdToken.mockResolvedValueOnce({ email: 'user@ucr.ac.cr', uid: '123' });
+      (findByEmailUser as jest.Mock).mockResolvedValueOnce({ id: null, email: 'user@ucr.ac.cr', is_active: true });
+
+      await expect(loginUserService('valid-token')).rejects.toThrow(UnauthorizedError);
     });
   });
 
@@ -87,7 +101,7 @@ describe('Auth Service', () => {
 
     it('should return a JWT token containing role=admin, containing uuid and email', async () => {
       mockVerifyIdToken.mockResolvedValueOnce({ email: 'admin@ucr.ac.cr', uid: 'admin123' });
-      (findByEmailAdmin as jest.Mock).mockResolvedValueOnce({ id: '123', email: 'admin@ucr.ac.cr', is_active: true});
+      (findByEmailAdmin as jest.Mock).mockResolvedValueOnce({ id: '123', email: 'admin@ucr.ac.cr', is_active: true });
 
       const result = await loginAdminService('valid-token');
 
@@ -103,6 +117,37 @@ describe('Auth Service', () => {
       expect(decoded.role).toBe('admin');
       expect(decoded).toHaveProperty('email');
       expect(decoded).toHaveProperty('uuid');
+    });
+
+    it('should throw UnauthorizedError if admin is inactive', async () => {
+      mockVerifyIdToken.mockResolvedValueOnce({ email: 'admin@ucr.ac.cr', uid: 'admin123' });
+      (findByEmailAdmin as jest.Mock).mockResolvedValueOnce({ id: '123', email: 'admin@ucr.ac.cr', is_active: false });
+
+      await expect(loginAdminService('valid-admin-token')).rejects.toThrow(UnauthorizedError);
+    });
+
+    it('should throw UnauthorizedError if admin ID is null', async () => {
+      mockVerifyIdToken.mockResolvedValueOnce({ email: 'admin@ucr.ac.cr', uid: 'admin123' });
+      (findByEmailAdmin as jest.Mock).mockResolvedValueOnce({ id: null, email: 'admin@ucr.ac.cr', is_active: true });
+
+      await expect(loginAdminService('valid-admin-token')).rejects.toThrow(UnauthorizedError);
+    });
+
+    it('should log successful verification for valid admin', async () => {
+      const consoleSpy = jest.spyOn(console, 'log');
+      mockVerifyIdToken.mockResolvedValueOnce({ email: 'admin@ucr.ac.cr', uid: 'admin123' });
+      (findByEmailAdmin as jest.Mock).mockResolvedValueOnce({ id: '123', email: 'admin@ucr.ac.cr', is_active: true });
+
+      const result = await loginAdminService('valid-token');
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Successful verification. Admin:',
+        'admin123',
+        'Email:',
+        'admin@ucr.ac.cr',
+        '123'
+      );
+      consoleSpy.mockRestore();
     });
   });
 
