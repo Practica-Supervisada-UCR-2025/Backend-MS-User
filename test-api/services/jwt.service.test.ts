@@ -10,13 +10,13 @@ describe('JwtService', () => {
   });
 
   it('should generate a valid token', () => {
-    const payload = {role: 'user' };
+    const payload = {role: 'user' , email: 'example@ucr.ac.cr', uuid: '123456789101'};
     const token = jwtService.generateToken(payload);
     expect(typeof token).toBe('string');
   });
 
   it('should verify a valid token', () => {
-    const payload = { role: 'user' };
+    const payload = {role: 'user' , email: 'example@ucr.ac.cr', uuid: '123456789101'};
     const token = jwtService.generateToken(payload);
     const decoded = jwtService.verifyToken(token);
     expect(decoded).toMatchObject(payload); // Verifica solo las propiedades relevantes

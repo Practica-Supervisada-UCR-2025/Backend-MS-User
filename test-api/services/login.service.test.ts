@@ -44,19 +44,24 @@ describe('Auth Service', () => {
       await expect(loginUserService('token-without-email')).rejects.toThrow(UnauthorizedError);
     });
 
-    it('should return a JWT token containing only role=user', async () => {
+    it('should return a JWT token containing role=user, containing uuid and email', async () => {
       mockVerifyIdToken.mockResolvedValueOnce({ email: 'user@ucr.ac.cr', uid: 'user123' });
-      (findByEmailUser as jest.Mock).mockResolvedValueOnce({ id: '123', email: 'user@ucr.ac.cr' });
+      (findByEmailUser as jest.Mock).mockResolvedValueOnce({ id: '123', email: 'user@ucr.ac.cr', is_active: true});
 
       const result = await loginUserService('valid-token');
 
       expect(result).toHaveProperty('access_token');
       expect(typeof result.access_token).toBe('string');
 
-      const decoded = jwt.decode(result.access_token) as { role: string };
+      const decoded = jwt.decode(result.access_token) as 
+      { 
+        role: string,
+        email: string,
+        uuid: string
+      };
       expect(decoded.role).toBe('user');
-      expect(decoded).not.toHaveProperty('email');
-      expect(decoded).not.toHaveProperty('uid');
+      expect(decoded).toHaveProperty('email');
+      expect(decoded).toHaveProperty('uuid');
     });
   });
 
@@ -80,19 +85,24 @@ describe('Auth Service', () => {
       await expect(loginAdminService('token-without-email')).rejects.toThrow(UnauthorizedError);
     });
 
-    it('should return a JWT token containing only role=admin', async () => {
+    it('should return a JWT token containing role=admin, containing uuid and email', async () => {
       mockVerifyIdToken.mockResolvedValueOnce({ email: 'admin@ucr.ac.cr', uid: 'admin123' });
-      (findByEmailAdmin as jest.Mock).mockResolvedValueOnce({ id: 'admin123', email: 'admin@ucr.ac.cr' });
+      (findByEmailAdmin as jest.Mock).mockResolvedValueOnce({ id: '123', email: 'admin@ucr.ac.cr', is_active: true});
 
       const result = await loginAdminService('valid-token');
 
       expect(result).toHaveProperty('access_token');
       expect(typeof result.access_token).toBe('string');
 
-      const decoded = jwt.decode(result.access_token) as { role: string };
+      const decoded = jwt.decode(result.access_token) as 
+      { 
+        role: string,
+        email: string,
+        uuid: string
+      };
       expect(decoded.role).toBe('admin');
-      expect(decoded).not.toHaveProperty('email');
-      expect(decoded).not.toHaveProperty('uid');
+      expect(decoded).toHaveProperty('email');
+      expect(decoded).toHaveProperty('uuid');
     });
   });
 

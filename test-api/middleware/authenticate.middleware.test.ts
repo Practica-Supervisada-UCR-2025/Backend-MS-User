@@ -76,7 +76,7 @@ describe('Authentication Middleware', () => {
 
     it('should set user role to admin when token is valid with admin role', () => {
       mockRequest.headers = { authorization: 'Bearer validToken' };
-      const mockDecodedToken = { role: 'admin' };
+      const mockDecodedToken = { role: 'admin', email: 'example@ucr.ac.cr', uuid: '123456789101' };
       
       (JwtService.prototype.verifyToken as jest.Mock).mockReturnValue(mockDecodedToken);
 
@@ -92,7 +92,7 @@ describe('Authentication Middleware', () => {
 
     it('should set user role to user when token is valid with non-admin role', () => {
       mockRequest.headers = { authorization: 'Bearer validToken' };
-      const mockDecodedToken = { role: 'user' };
+      const mockDecodedToken = { role: 'user', email: 'example@ucr.ac.cr', uuid: '123456789101' };
       
       (JwtService.prototype.verifyToken as jest.Mock).mockReturnValue(mockDecodedToken);
 
