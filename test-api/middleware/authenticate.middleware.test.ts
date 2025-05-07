@@ -105,6 +105,26 @@ describe('Authentication Middleware', () => {
       expect(nextFunction).toHaveBeenCalledWith();
       expect((mockRequest as any).user.role).toBe('user');
     });
+
+    it('should throw UnauthorizedError when token is valid but missing email', () => {
+      mockRequest.headers = { authorization: 'Bearer validToken' };
+      const mockDecodedToken = { role: 'user', uuid: '123456789101' }; // no email
+
+      (JwtService.prototype.verifyToken as jest.Mock).mockReturnValue(mockDecodedToken);
+
+      authenticateJWT(
+        mockRequest as Request,
+        mockResponse as Response,
+        nextFunction
+      );
+
+      expect(nextFunction).toHaveBeenCalledWith(
+        expect.any(UnauthorizedError)
+      );
+      const error = (nextFunction as jest.Mock).mock.calls[0][0];
+      expect(error.message).toBe('Unauthorized');
+      expect(error.details).toEqual(['Not registered user']);
+    });
   });
 
   describe('validateAuth', () => {
@@ -151,6 +171,37 @@ describe('Authentication Middleware', () => {
 
       expect(nextFunction).toHaveBeenCalledWith();
       expect(mockAdmin.verifyIdToken).toHaveBeenCalledWith('validToken');
+    });
+
+    it('should throw UnauthorizedError when auth_token is an empty string', async () => {
+      mockRequest.body = { auth_token: '' };
+
+      await validateAuth(
+        mockRequest as Request,
+        mockResponse as Response,
+        nextFunction
+      );
+
+      const error = (nextFunction as jest.Mock).mock.calls[0][0];
+      expect(error).toBeInstanceOf(UnauthorizedError);
+      expect(error.message).toBe('Unauthorized');
+      expect(error.details).toEqual(['No auth token provided']);
+    });
+
+    it('should throw UnauthorizedError when Firebase token verification throws an unexpected error', async () => {
+      mockRequest.body = { auth_token: 'validToken' };
+      mockAdmin.verifyIdToken.mockRejectedValueOnce(new Error('Unexpected error'));
+
+      await validateAuth(
+        mockRequest as Request,
+        mockResponse as Response,
+        nextFunction
+      );
+
+      const error = (nextFunction as jest.Mock).mock.calls[0][0];
+      expect(error).toBeInstanceOf(UnauthorizedError);
+      expect(error.message).toBe('Unauthorized');
+      expect(error.details).toEqual(['Invalid auth token']);
     });
   });
 });
