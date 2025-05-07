@@ -32,3 +32,44 @@ export const updateAdminActiveStatus = async (email: string, isActive: boolean) 
     throw error;
   }
 };
+
+
+export const updateAdminProfile = async (email: string, updates: { full_name?: string, profile_picture?: string }) => {
+  try {
+    let query = 'UPDATE admin_users SET';
+    const values = [];
+    let paramIndex = 1;
+    
+    const updateFields = [];
+    
+    if (updates.full_name) {
+      updateFields.push(` full_name = $${paramIndex++}`);
+      values.push(updates.full_name);
+    }
+    
+    if (updates.profile_picture) {
+      updateFields.push(` profile_picture = $${paramIndex++}`);
+      values.push(updates.profile_picture);
+    }
+    
+    // Si no hay nada que actualizar, retornar admin existente
+    if (updateFields.length === 0) {
+      return await findByEmailAdmin(email);
+    }
+    
+    query += updateFields.join(',');
+    query += ` WHERE email = $${paramIndex} RETURNING *`;
+    values.push(email);
+    
+    const result = await client.query(query, values);
+    
+    if (result.rowCount === 0) {
+      throw new Error(`Admin with email ${email} not found`);
+    }
+    
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error updating admin profile:', error);
+    throw error;
+  }
+};
