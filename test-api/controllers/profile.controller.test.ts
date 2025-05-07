@@ -1,4 +1,4 @@
-import { getUserProfileController, getAdminProfileController } from '../../src/features/users/controllers/profile.controller';
+import { getUserProfileController, getAdminProfileController, updateUserProfileController, updateAdminProfileController } from '../../src/features/users/controllers/profile.controller';
 import * as profileService from '../../src/features/users/services/profile.service';
 import { NotFoundError } from '../../src/utils/errors/api-error';
 
@@ -95,6 +95,108 @@ describe('Profile Controllers', () => {
       await getAdminProfileController(req, res, next);
 
       expect(profileService.getAdminProfileService).toHaveBeenCalledWith('admin@ucr.ac.cr');
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(error);
+    });
+  });
+
+  describe('updateUserProfileController', () => {
+    it('should return 200 and updated user profile when update is successful', async () => {
+      const updateData = {
+        email: 'test@ucr.ac.cr',
+        username: 'newusername',
+        full_name: 'New Name',
+        profile_picture: 'https://example.com/new-pic.jpg'
+      };
+
+      const mockUpdateResult = {
+        message: 'User profile updated successfully',
+        userData: {
+          email: 'test@ucr.ac.cr',
+          username: 'newusername',
+          full_name: 'New Name',
+          profile_picture: 'https://example.com/new-pic.jpg'
+        }
+      };
+
+      req.body = updateData;
+      (profileService.updateUserProfileService as jest.Mock).mockResolvedValueOnce(mockUpdateResult);
+
+      await updateUserProfileController(req, res, next);
+
+      expect(profileService.updateUserProfileService).toHaveBeenCalledWith('test@ucr.ac.cr', updateData);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        message: mockUpdateResult.message,
+        data: mockUpdateResult.userData
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should call next with error when user update service throws an error', async () => {
+      const updateData = {
+        email: 'test@ucr.ac.cr',
+        username: 'newusername'
+      };
+
+      const error = new NotFoundError('User not found');
+      req.body = updateData;
+      (profileService.updateUserProfileService as jest.Mock).mockRejectedValueOnce(error);
+
+      await updateUserProfileController(req, res, next);
+
+      expect(profileService.updateUserProfileService).toHaveBeenCalledWith('test@ucr.ac.cr', updateData);
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(error);
+    });
+  });
+
+  describe('updateAdminProfileController', () => {
+    it('should return 200 and updated admin profile when update is successful', async () => {
+      const updateData = {
+        email: 'admin@ucr.ac.cr',
+        full_name: 'New Admin Name',
+        profile_picture: 'https://example.com/new-admin-pic.jpg'
+      };
+
+      const mockUpdateResult = {
+        message: 'Admin profile updated successfully',
+        adminData: {
+          email: 'admin@ucr.ac.cr',
+          full_name: 'New Admin Name',
+          profile_picture: 'https://example.com/new-admin-pic.jpg'
+        }
+      };
+
+      req.body = updateData;
+      (profileService.updateAdminProfileService as jest.Mock).mockResolvedValueOnce(mockUpdateResult);
+
+      await updateAdminProfileController(req, res, next);
+
+      expect(profileService.updateAdminProfileService).toHaveBeenCalledWith('admin@ucr.ac.cr', updateData);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        message: mockUpdateResult.message,
+        data: mockUpdateResult.adminData
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should call next with error when admin update service throws an error', async () => {
+      const updateData = {
+        email: 'admin@ucr.ac.cr',
+        full_name: 'New Admin Name'
+      };
+
+      const error = new NotFoundError('Admin not found');
+      req.body = updateData;
+      (profileService.updateAdminProfileService as jest.Mock).mockRejectedValueOnce(error);
+
+      await updateAdminProfileController(req, res, next);
+
+      expect(profileService.updateAdminProfileService).toHaveBeenCalledWith('admin@ucr.ac.cr', updateData);
       expect(res.status).not.toHaveBeenCalled();
       expect(res.json).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(error);
