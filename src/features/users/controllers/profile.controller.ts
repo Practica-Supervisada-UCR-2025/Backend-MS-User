@@ -1,16 +1,39 @@
-// src/features/users/controllers/profile.controller.ts
-import { Request, Response, NextFunction } from 'express';
-import { AuthenticatedRequest } from '../../middleware/authenticate.middleware';
-import { getUserProfileService } from '../services/getProfile.service';
+import { Request, Response, NextFunction } from "express";
+import { getUserProfileService, getAdminProfileService } from "../services/profile.service";
 
-export const getUserProfileController = (req: Request, res: Response, next: NextFunction) => {
+
+export const getUserProfileController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    // Convertir el request a AuthenticatedRequest para acceder a la propiedad user
-    const authReq = req as AuthenticatedRequest;
-    const profile = getUserProfileService(authReq );
-    res.status(200).json({
-      message: 'User profile retrieved successfully',
-      data: profile
+    const { email } = req.body;
+
+    const {message, userData} = await getUserProfileService(email);
+
+    res.status(201).json({
+      message: message,
+      data: userData,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAdminProfileController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email } = req.body;
+
+    const {message, adminData} = await getAdminProfileService(email);
+
+    res.status(201).json({
+      message: message,
+      data: adminData,
     });
   } catch (error) {
     next(error);

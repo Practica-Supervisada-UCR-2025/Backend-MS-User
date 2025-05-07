@@ -4,13 +4,13 @@ export interface BaseUser {
   auth_id: string;
   full_name: string;
   is_active: boolean;
+  profile_picture: string;
   created_at: Date;
   last_login: Date | null;
 }
 
 export interface User extends BaseUser {
   username: string;
-  profile_picture: string;
 }
 
 export interface AdminUser extends BaseUser {
