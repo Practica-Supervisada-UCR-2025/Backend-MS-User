@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { UnauthorizedError, ConflictError, InternalServerError } from '../../../utils/errors/api-error';
 import axios from 'axios';
 
-const DEFAULT_PROFILE_PICTURE = 'https://storage.googleapis.com/your-bucket/default-avatar.png';  // Update with your actual default image URL
+const DEFAULT_PROFILE_PICTURE = 'https://utfs.io/f/Ri7z8Bp5Nkcu6mKIWdaT84vfYJdV9XQeAOZqrItaMwWcxbph';  // Update with your actual default image URL
 
 async function sendRegistrationConfirmation(email: string, fullName: string, userType: 'mobile' | 'web') {
   try {
