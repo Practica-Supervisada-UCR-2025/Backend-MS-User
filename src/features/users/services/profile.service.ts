@@ -4,14 +4,9 @@ import { updateUserProfile } from "../repositories/user.repository";
 import { updateAdminProfile } from "../repositories/admin.repository";
 import { NotFoundError, BadRequestError } from "../../../utils/errors/api-error";
 import { UpdateUserProfileDTO, UpdateAdminProfileDTO } from "../dto/profile.dto";
-import multer from 'multer';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 4 * 1024 * 1024 } // 4MB
-});
 
 export const getUserProfileService = async (email: string) => {
   const user = await findByEmailUser(email);
@@ -63,7 +58,7 @@ async function uploadProfileImage(
     });
 
     // Llamar al microservicio MS-Files
-    const filesResponse = await fetch('http://ms-files:3006/api/files/profile-image', {
+    const filesResponse = await fetch('http://localhost:3006/api/files/profile-image', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${tokenAuth}` // Usar el token del usuario

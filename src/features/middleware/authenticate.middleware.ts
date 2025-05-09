@@ -6,7 +6,9 @@ import admin from '../../config/firebase';
 
 export interface AuthenticatedRequest extends Request {
   user: {
+    email: string;
     role: string;
+    uuid: string;
   };
 }
 
@@ -37,8 +39,12 @@ export const authenticateJWT = (req: Request, res: Response, next: NextFunction)
     
     // Convertimos el req a AuthenticatedRequest al inyectar la propiedad user
     (req as AuthenticatedRequest).user = {
-      role: validRole
+      email: decoded.email,
+      role: decoded.role,
+      uuid: decoded.uuid
     };
+    
+    (req as any).token = token;
 
     next();
   } catch (error) {

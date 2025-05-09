@@ -4,6 +4,7 @@ import { updateUserProfileSchema, updateAdminProfileSchema, UpdateUserProfileDTO
 import * as yup from 'yup';
 import { BadRequestError } from "../../../utils/errors/api-error";
 import multer from 'multer';
+import { AuthenticatedRequest } from '../../middleware/authenticate.middleware';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -19,12 +20,12 @@ const upload = multer({
 }).single('profile_picture'); // El nombre del campo debe ser 'profile_picture'
 
 export const getUserProfileController = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { email } = req.body;
+    const email = req.user.email;
 
     const { message, userData } = await getUserProfileService(email);
 
@@ -38,12 +39,12 @@ export const getUserProfileController = async (
 };
 
 export const getAdminProfileController = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { email } = req.body;
+    const email = req.user.email;
 
     const { message, adminData } = await getAdminProfileService(email);
 
@@ -57,7 +58,7 @@ export const getAdminProfileController = async (
 };
 
 export const updateUserProfileController = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -75,16 +76,13 @@ export const updateUserProfileController = async (
         stripUnknown: true
       }) as UpdateUserProfileDTO;
 
-      const authHeader = req.headers.authorization;
-      if (!authHeader) {
-        throw new BadRequestError('Authorization header is missing');
-      }
-      const token = authHeader.split('Bearer ')[1];
+      const token = (req as any).token;
+      const email = req.user.email;
       let result;
       if (req.file) {
         // Pasar el archivo al servicio
         result = await updateUserProfileService(
-          validatedData.email,
+          email,
           token,
           validatedData,
           req.file.buffer,
@@ -93,7 +91,7 @@ export const updateUserProfileController = async (
         );
       } else {
         // No hay archivo para subir
-        result = await updateUserProfileService(validatedData.email, token, validatedData);
+        result = await updateUserProfileService(email, token, validatedData);
       }
 
       res.status(200).json({
@@ -111,7 +109,7 @@ export const updateUserProfileController = async (
 };
 
 export const updateAdminProfileController = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -122,13 +120,9 @@ export const updateAdminProfileController = async (
       stripUnknown: true
     }) as UpdateAdminProfileDTO;
 
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      throw new BadRequestError('Authorization header is missing');
-    }
-    const token = authHeader.split('Bearer ')[1];
-
-    const result = await updateAdminProfileService(validatedData.email, token, validatedData);
+    const token = (req as any).token;
+    const email = req.user.email;
+    const result = await updateAdminProfileService(email, token, validatedData);
 
     res.status(200).json({
       message: result.message,
