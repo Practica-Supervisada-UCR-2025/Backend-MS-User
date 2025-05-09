@@ -4,7 +4,14 @@ import { updateUserProfile } from "../repositories/user.repository";
 import { updateAdminProfile } from "../repositories/admin.repository";
 import { NotFoundError, BadRequestError } from "../../../utils/errors/api-error";
 import { UpdateUserProfileDTO, UpdateAdminProfileDTO } from "../dto/profile.dto";
+import multer from 'multer';
+import FormData from 'form-data';
+import fetch from 'node-fetch';
 
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 4 * 1024 * 1024 } // 4MB
+});
 
 export const getUserProfileService = async (email: string) => {
   const user = await findByEmailUser(email);
@@ -41,8 +48,47 @@ export const getAdminProfileService = async (email: string) => {
     },
   };
 };
+async function uploadProfileImage(
+  fileBuffer: Buffer,
+  fileName: string,
+  fileMimeType: string,
+  tokenAuth: string
+): Promise<string> {
+  try {
+    // Crear FormData para enviar al MS-Files
+    const formData = new FormData();
+    formData.append('file', fileBuffer, {
+      filename: fileName,
+      contentType: fileMimeType
+    });
 
-export const updateUserProfileService = async (email: string, updateData: UpdateUserProfileDTO) => {
+    // Llamar al microservicio MS-Files
+    const filesResponse = await fetch('http://ms-files:3006/api/files/profile-image', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${tokenAuth}` // Usar el token del usuario
+      },
+      body: formData
+    });
+
+    // Procesar la respuesta de MS-Files
+    if (!filesResponse.ok) {
+      const errorData = await filesResponse.json();
+      throw new BadRequestError('Error uploading profile picture', [errorData.message]);
+    }
+
+    // Extraer URL del archivo
+    const fileData = await filesResponse.json();
+    return fileData.fileUrl;
+  } catch (error) {
+    console.error('Error uploading profile picture:', error);
+    throw new BadRequestError('Error uploading profile picture', [(error as Error).message]);
+  }
+}
+
+export const updateUserProfileService = async (email: string, tokenAuth: string, updateData: UpdateUserProfileDTO, fileBuffer?: Buffer,
+  fileName?: string,
+  fileMimeType?: string) => {
   try {
 
     const user = await findByEmailUser(email);
@@ -62,10 +108,9 @@ export const updateUserProfileService = async (email: string, updateData: Update
       updateFields.full_name = updateData.full_name;
     }
 
-    if (updateData.profile_picture) {
-      updateFields.profile_picture = updateData.profile_picture;
+    if (fileBuffer && fileName && fileMimeType) {
+      updateFields.profile_picture = await uploadProfileImage(fileBuffer, fileName, fileMimeType, tokenAuth);
     }
-
     // Verificar si hay campos para actualizar
     if (Object.keys(updateFields).length === 0) {
       throw new BadRequestError("No fields to update provided", ["Provide at least one field to update"]);
@@ -95,7 +140,9 @@ export const updateUserProfileService = async (email: string, updateData: Update
   }
 };
 
-export const updateAdminProfileService = async (email: string, updateData: UpdateAdminProfileDTO) => {
+export const updateAdminProfileService = async (email: string, tokenAuth: string, updateData: UpdateAdminProfileDTO, fileBuffer?: Buffer,
+  fileName?: string,
+  fileMimeType?: string) => {
   try {
 
     const admin = await findByEmailAdmin(email);
@@ -110,8 +157,8 @@ export const updateAdminProfileService = async (email: string, updateData: Updat
       updateFields.full_name = updateData.full_name;
     }
 
-    if (updateData.profile_picture) {
-      updateFields.profile_picture = updateData.profile_picture;
+    if (fileBuffer && fileName && fileMimeType) {
+      updateFields.profile_picture = await uploadProfileImage(fileBuffer, fileName, fileMimeType, tokenAuth);
     }
 
     // Verificar si hay campos para actualizar

@@ -1,15 +1,6 @@
 import * as yup from 'yup';
 
 export const updateUserProfileSchema = yup.object({
-  email: yup
-    .string()
-    .email('El formato del correo no es válido')
-    .matches(
-      /^[\w-.]+@ucr\.ac\.cr$/,
-      'El correo debe ser institucional de la UCR (@ucr.ac.cr)'
-    )
-    .required('El correo electrónico es obligatorio'),
-
   username: yup
     .string()
     .min(3, 'El nombre de usuario debe tener al menos 3 caracteres')
@@ -31,22 +22,9 @@ export const updateUserProfileSchema = yup.object({
     )
     .optional(),
 
-  profile_picture: yup
-    .string()
-    .url('La URL de la imagen de perfil debe ser válida')
-    .optional()
 });
 
 export const updateAdminProfileSchema = yup.object({
-  email: yup
-    .string()
-    .email('El formato del correo no es válido')
-    .matches(
-      /^[\w-.]+@ucr\.ac\.cr$/,
-      'El correo debe ser institucional de la UCR (@ucr.ac.cr)'
-    )
-    .required('El correo electrónico es obligatorio'),
-
   full_name: yup
     .string()
     .trim()
@@ -57,11 +35,6 @@ export const updateAdminProfileSchema = yup.object({
       'El nombre completo solo puede contener letras y espacios'
     )
     .optional(),
-
-  profile_picture: yup
-    .string()
-    .url('La URL de la imagen de perfil debe ser válida')
-    .optional()
 });
 
 export type UpdateUserProfileDTO = yup.InferType<typeof updateUserProfileSchema>;
