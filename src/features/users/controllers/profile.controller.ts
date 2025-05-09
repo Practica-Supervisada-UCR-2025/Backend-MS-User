@@ -113,26 +113,48 @@ export const updateAdminProfileController = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  try {
 
-    const validatedData = await updateAdminProfileSchema.validate(req.body, {
-      abortEarly: false,
-      stripUnknown: true
-    }) as UpdateAdminProfileDTO;
-
-    const token = (req as any).token;
-    const email = req.user.email;
-    const result = await updateAdminProfileService(email, token, validatedData);
-
-    res.status(200).json({
-      message: result.message,
-      data: result.adminData
-    });
-  } catch (error) {
-    if (error instanceof yup.ValidationError) {
-      next(new BadRequestError('Validation error', error.errors));
-    } else {
-      next(error);
+  upload(req, res, async function (err) {
+    if (err instanceof multer.MulterError) {
+      return next(new BadRequestError(`Error upload profile: ${err.message}`));
+    } else if (err) {
+      return next(new BadRequestError(`Unknown Error: ${err.message}`));
     }
-  }
+    try {
+
+      const validatedData = await updateAdminProfileSchema.validate(req.body, {
+        abortEarly: false,
+        stripUnknown: true
+      }) as UpdateAdminProfileDTO;
+
+      const token = (req as any).token;
+      const email = req.user.email;
+      let result;
+      if (req.file) {
+        // Pasar el archivo al servicio
+        result = await updateAdminProfileService(
+          email,
+          token,
+          validatedData,
+          req.file.buffer,
+          req.file.originalname,
+          req.file.mimetype
+        );
+      } else {
+        // No hay archivo para subir
+        result = await updateAdminProfileService(email, token, validatedData);
+      }
+
+      res.status(200).json({
+        message: result.message,
+        data: result.adminData
+      });
+    } catch (error) {
+      if (error instanceof yup.ValidationError) {
+        next(new BadRequestError('Validation error', error.errors));
+      } else {
+        next(error);
+      }
+    }
+  });
 };
