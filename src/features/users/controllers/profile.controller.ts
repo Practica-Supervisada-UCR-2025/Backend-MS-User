@@ -62,50 +62,55 @@ export const updateUserProfileController = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  upload(req, res, async function (err) {
-    if (err instanceof multer.MulterError) {
-      return next(new BadRequestError(`Error upload profile: ${err.message}`));
-    } else if (err) {
-      return next(new BadRequestError(`Unknown Error: ${err.message}`));
-    }
-
-    try {
-      // Validar los datos del formulario
-      const validatedData = await updateUserProfileSchema.validate(req.body, {
-        abortEarly: false,
-        stripUnknown: true
-      }) as UpdateUserProfileDTO;
-
-      const token = (req as any).token;
-      const email = req.user.email;
-      let result;
-      if (req.file) {
-        // Pasar el archivo al servicio
-        result = await updateUserProfileService(
-          email,
-          token,
-          validatedData,
-          req.file.buffer,
-          req.file.originalname,
-          req.file.mimetype
-        );
-      } else {
-        // No hay archivo para subir
-        result = await updateUserProfileService(email, token, validatedData);
-      }
-
-      res.status(200).json({
-        message: result.message,
-        data: result.userData
+  try {
+    await new Promise<void>((resolve, reject) => {
+      upload(req, res, (err) => {
+        if (err instanceof multer.MulterError) {
+          reject(new BadRequestError(`Error upload profile: ${err.message}`));
+        } else if (err) {
+          reject(new BadRequestError(`Error upload profile: ${err.message}`));
+        } else {
+          resolve();
+        }
       });
-    } catch (error) {
-      if (error instanceof yup.ValidationError) {
-        next(new BadRequestError('Validation error', error.errors));
-      } else {
-        next(error);
-      }
+    });
+
+    // Validate form data
+    const validatedData = await updateUserProfileSchema.validate(req.body, {
+      abortEarly: false,
+      stripUnknown: true
+    }) as UpdateUserProfileDTO;
+
+    const token = (req as any).token;
+    const email = req.user.email;
+    let result;
+
+    if (req.file) {
+      // Pass file to service
+      result = await updateUserProfileService(
+        email,
+        token,
+        validatedData,
+        req.file.buffer,
+        req.file.originalname,
+        req.file.mimetype
+      );
+    } else {
+      // No file to upload
+      result = await updateUserProfileService(email, token, validatedData);
     }
-  });
+
+    res.status(200).json({
+      message: result.message,
+      data: result.userData
+    });
+  } catch (error) {
+    if (error instanceof yup.ValidationError) {
+      next(new BadRequestError('Validation error', error.errors));
+    } else {
+      next(error);
+    }
+  }
 };
 
 export const updateAdminProfileController = async (
@@ -113,48 +118,52 @@ export const updateAdminProfileController = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-
-  upload(req, res, async function (err) {
-    if (err instanceof multer.MulterError) {
-      return next(new BadRequestError(`Error upload profile: ${err.message}`));
-    } else if (err) {
-      return next(new BadRequestError(`Unknown Error: ${err.message}`));
-    }
-    try {
-
-      const validatedData = await updateAdminProfileSchema.validate(req.body, {
-        abortEarly: false,
-        stripUnknown: true
-      }) as UpdateAdminProfileDTO;
-
-      const token = (req as any).token;
-      const email = req.user.email;
-      let result;
-      if (req.file) {
-        // Pasar el archivo al servicio
-        result = await updateAdminProfileService(
-          email,
-          token,
-          validatedData,
-          req.file.buffer,
-          req.file.originalname,
-          req.file.mimetype
-        );
-      } else {
-        // No hay archivo para subir
-        result = await updateAdminProfileService(email, token, validatedData);
-      }
-
-      res.status(200).json({
-        message: result.message,
-        data: result.adminData
+  try {
+    await new Promise<void>((resolve, reject) => {
+      upload(req, res, (err) => {
+        if (err instanceof multer.MulterError) {
+          reject(new BadRequestError(`Error upload profile: ${err.message}`));
+        } else if (err) {
+          reject(new BadRequestError(`Error upload profile: ${err.message}`));
+        } else {
+          resolve();
+        }
       });
-    } catch (error) {
-      if (error instanceof yup.ValidationError) {
-        next(new BadRequestError('Validation error', error.errors));
-      } else {
-        next(error);
-      }
+    });
+
+    const validatedData = await updateAdminProfileSchema.validate(req.body, {
+      abortEarly: false,
+      stripUnknown: true
+    }) as UpdateAdminProfileDTO;
+
+    const token = (req as any).token;
+    const email = req.user.email;
+    let result;
+
+    if (req.file) {
+      // Pass file to service
+      result = await updateAdminProfileService(
+        email,
+        token,
+        validatedData,
+        req.file.buffer,
+        req.file.originalname,
+        req.file.mimetype
+      );
+    } else {
+      // No file to upload
+      result = await updateAdminProfileService(email, token, validatedData);
     }
-  });
+
+    res.status(200).json({
+      message: result.message,
+      data: result.adminData
+    });
+  } catch (error) {
+    if (error instanceof yup.ValidationError) {
+      next(new BadRequestError('Validation error', error.errors));
+    } else {
+      next(error);
+    }
+  }
 };

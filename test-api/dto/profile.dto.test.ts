@@ -1,123 +1,152 @@
 import { updateUserProfileSchema, updateAdminProfileSchema } from '../../src/features/users/dto/profile.dto';
 
-describe('Profile DTO Validation', () => {
+describe('Profile DTOs Validation', () => {
   describe('updateUserProfileSchema', () => {
-    it('should validate valid user profile data', async () => {
+    it('should validate a valid user profile update', async () => {
       const validData = {
-        email: 'user@ucr.ac.cr',
         username: 'validuser',
-        full_name: 'Valid User',
-        profile_picture: 'https://example.com/pic.jpg'
+        full_name: 'Valid Name'
       };
 
-      const result = await updateUserProfileSchema.validate(validData);
-      expect(result).toEqual(validData);
+      await expect(updateUserProfileSchema.validate(validData)).resolves.toEqual(validData);
     });
 
-    it('should validate with optional fields missing', async () => {
+    it('should validate when only username is provided', async () => {
       const validData = {
-        email: 'user@ucr.ac.cr'
+        username: 'validuser'
       };
 
-      const result = await updateUserProfileSchema.validate(validData);
-      expect(result).toEqual(validData);
+      await expect(updateUserProfileSchema.validate(validData)).resolves.toEqual(validData);
     });
 
-    it('should reject invalid email format', async () => {
-      const invalidData = {
-        email: 'invalid.email@gmail.com'
+    it('should validate when only full_name is provided', async () => {
+      const validData = {
+        full_name: 'Valid Name'
       };
 
-      await expect(updateUserProfileSchema.validate(invalidData))
-        .rejects
-        .toThrow('El correo debe ser institucional de la UCR (@ucr.ac.cr)');
+      await expect(updateUserProfileSchema.validate(validData)).resolves.toEqual(validData);
     });
 
-    it('should reject invalid username format', async () => {
+    it('should reject username that is too short', async () => {
       const invalidData = {
-        email: 'user@ucr.ac.cr',
-        username: 'invalid@username'
+        username: 'ab', // Less than 3 characters
+        full_name: 'Valid Name'
       };
 
-      await expect(updateUserProfileSchema.validate(invalidData))
-        .rejects
-        .toThrow('El nombre de usuario solo puede contener letras, números, puntos, guiones y guiones bajos');
+      await expect(updateUserProfileSchema.validate(invalidData)).rejects.toThrow(
+        'El nombre de usuario debe tener al menos 3 caracteres'
+      );
     });
 
-    it('should reject invalid full_name format', async () => {
+    it('should reject username that is too long', async () => {
       const invalidData = {
-        email: 'user@ucr.ac.cr',
-        full_name: 'Invalid123 Name'
+        username: 'a'.repeat(21), // More than 20 characters
+        full_name: 'Valid Name'
       };
 
-      await expect(updateUserProfileSchema.validate(invalidData))
-        .rejects
-        .toThrow('El nombre completo solo puede contener letras y espacios');
+      await expect(updateUserProfileSchema.validate(invalidData)).rejects.toThrow(
+        'El nombre de usuario no debe superar los 20 caracteres'
+      );
     });
 
-    it('should reject invalid profile picture URL', async () => {
+    it('should reject username with invalid characters', async () => {
       const invalidData = {
-        email: 'user@ucr.ac.cr',
-        profile_picture: 'not-a-url'
+        username: 'user@name', // Contains @
+        full_name: 'Valid Name'
       };
 
-      await expect(updateUserProfileSchema.validate(invalidData))
-        .rejects
-        .toThrow('La URL de la imagen de perfil debe ser válida');
+      await expect(updateUserProfileSchema.validate(invalidData)).rejects.toThrow(
+        'El nombre de usuario solo puede contener letras, números, puntos, guiones y guiones bajos'
+      );
+    });
+
+    it('should reject full_name that is too short', async () => {
+      const invalidData = {
+        username: 'validuser',
+        full_name: 'Ab' // Less than 3 characters
+      };
+
+      await expect(updateUserProfileSchema.validate(invalidData)).rejects.toThrow(
+        'El nombre completo debe tener al menos 3 caracteres'
+      );
+    });
+
+    it('should reject full_name that is too long', async () => {
+      const invalidData = {
+        username: 'validuser',
+        full_name: 'A'.repeat(26) // More than 25 characters
+      };
+
+      await expect(updateUserProfileSchema.validate(invalidData)).rejects.toThrow(
+        'El nombre completo no debe superar los 25 caracteres'
+      );
+    });
+
+    it('should reject full_name with invalid characters', async () => {
+      const invalidData = {
+        username: 'validuser',
+        full_name: 'Invalid Name123' // Contains numbers
+      };
+
+      await expect(updateUserProfileSchema.validate(invalidData)).rejects.toThrow(
+        'El nombre completo solo puede contener letras y espacios'
+      );
+    });
+
+    it('should accept valid full_name with Spanish characters', async () => {
+      const validData = {
+        full_name: 'José Martín Ñáñez'
+      };
+
+      await expect(updateUserProfileSchema.validate(validData)).resolves.toEqual(validData);
     });
   });
 
   describe('updateAdminProfileSchema', () => {
-    it('should validate valid admin profile data', async () => {
+    it('should validate a valid admin profile update', async () => {
       const validData = {
-        email: 'admin@ucr.ac.cr',
-        full_name: 'Valid Admin',
-        profile_picture: 'https://example.com/pic.jpg'
+        full_name: 'Valid Admin Name'
       };
 
-      const result = await updateAdminProfileSchema.validate(validData);
-      expect(result).toEqual(validData);
+      await expect(updateAdminProfileSchema.validate(validData)).resolves.toEqual(validData);
     });
 
-    it('should validate with optional fields missing', async () => {
+    it('should reject full_name that is too short', async () => {
+      const invalidData = {
+        full_name: 'Ab' // Less than 3 characters
+      };
+
+      await expect(updateAdminProfileSchema.validate(invalidData)).rejects.toThrow(
+        'El nombre completo debe tener al menos 3 caracteres'
+      );
+    });
+
+    it('should reject full_name that is too long', async () => {
+      const invalidData = {
+        full_name: 'A'.repeat(26) // More than 25 characters
+      };
+
+      await expect(updateAdminProfileSchema.validate(invalidData)).rejects.toThrow(
+        'El nombre completo no debe superar los 25 caracteres'
+      );
+    });
+
+    it('should reject full_name with invalid characters', async () => {
+      const invalidData = {
+        full_name: 'Invalid Admin123' // Contains numbers
+      };
+
+      await expect(updateAdminProfileSchema.validate(invalidData)).rejects.toThrow(
+        'El nombre completo solo puede contener letras y espacios'
+      );
+    });
+
+    it('should accept valid full_name with Spanish characters', async () => {
       const validData = {
-        email: 'admin@ucr.ac.cr'
+        full_name: 'Administrador Ñáñez'
       };
 
-      const result = await updateAdminProfileSchema.validate(validData);
-      expect(result).toEqual(validData);
-    });
-
-    it('should reject invalid email format', async () => {
-      const invalidData = {
-        email: 'invalid.email@gmail.com'
-      };
-
-      await expect(updateAdminProfileSchema.validate(invalidData))
-        .rejects
-        .toThrow('El correo debe ser institucional de la UCR (@ucr.ac.cr)');
-    });
-
-    it('should reject invalid full_name format', async () => {
-      const invalidData = {
-        email: 'admin@ucr.ac.cr',
-        full_name: 'Invalid123 Name'
-      };
-
-      await expect(updateAdminProfileSchema.validate(invalidData))
-        .rejects
-        .toThrow('El nombre completo solo puede contener letras y espacios');
-    });
-
-    it('should reject invalid profile picture URL', async () => {
-      const invalidData = {
-        email: 'admin@ucr.ac.cr',
-        profile_picture: 'not-a-url'
-      };
-
-      await expect(updateAdminProfileSchema.validate(invalidData))
-        .rejects
-        .toThrow('La URL de la imagen de perfil debe ser válida');
+      await expect(updateAdminProfileSchema.validate(validData)).resolves.toEqual(validData);
     });
   });
 });
