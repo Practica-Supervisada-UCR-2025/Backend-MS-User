@@ -47,7 +47,9 @@ async function uploadProfileImage(
   fileBuffer: Buffer,
   fileName: string,
   fileMimeType: string,
-  tokenAuth: string
+  tokenAuth: string,
+  oldProfileUrl?: string,
+  userId?: string
 ): Promise<string> {
   try {
     // Crear FormData para enviar al MS-Files
@@ -57,6 +59,10 @@ async function uploadProfileImage(
       contentType: fileMimeType
     });
 
+    formData.append('userId', userId);
+    if (oldProfileUrl) {
+      formData.append('oldImageUrl', oldProfileUrl);
+    }
     // Llamar al microservicio MS-Files
     const filesResponse = await fetch('http://localhost:3006/api/files/profile-image', {
       method: 'POST',
@@ -104,7 +110,7 @@ export const updateUserProfileService = async (email: string, tokenAuth: string,
     }
 
     if (fileBuffer && fileName && fileMimeType) {
-      updateFields.profile_picture = await uploadProfileImage(fileBuffer, fileName, fileMimeType, tokenAuth);
+      updateFields.profile_picture = await uploadProfileImage(fileBuffer, fileName, fileMimeType, tokenAuth, user.profile_picture, user.id);
     }
     // Verificar si hay campos para actualizar
     if (Object.keys(updateFields).length === 0) {
@@ -169,7 +175,7 @@ export const updateAdminProfileService = async (email: string, tokenAuth: string
   try {
 
     const admin = await findByEmailAdmin(email);
-
+  
     if (!admin) {
       throw new NotFoundError("Admin not found");
     }
@@ -181,7 +187,7 @@ export const updateAdminProfileService = async (email: string, tokenAuth: string
     }
 
     if (fileBuffer && fileName && fileMimeType) {
-      updateFields.profile_picture = await uploadProfileImage(fileBuffer, fileName, fileMimeType, tokenAuth);
+      updateFields.profile_picture = await uploadProfileImage(fileBuffer, fileName, fileMimeType, tokenAuth, admin.profile_picture, admin.id);
     }
 
     // Verificar si hay campos para actualizar
