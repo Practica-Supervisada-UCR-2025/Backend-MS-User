@@ -6,7 +6,7 @@ import { NotFoundError, BadRequestError } from "../../../utils/errors/api-error"
 import { UpdateUserProfileDTO, UpdateAdminProfileDTO } from "../dto/profile.dto";
 import FormData from 'form-data';
 import fetch from 'node-fetch';
-
+import { logProfileUpdate } from './audit.service';
 
 export const getUserProfileService = async (email: string) => {
   const user = await findByEmailUser(email);
@@ -110,12 +110,40 @@ export const updateUserProfileService = async (email: string, tokenAuth: string,
     if (Object.keys(updateFields).length === 0) {
       throw new BadRequestError("No fields to update provided", ["Provide at least one field to update"]);
     }
+ // Guardar valores actuales antes de la actualización para la auditoría
+    const oldValues: Record<string, any> = {};
+    const changedFields: string[] = [];
+    
+    Object.keys(updateFields).forEach(field => {
+      if (user[field as keyof typeof user] !== updateFields[field as keyof typeof updateFields]) {
+        oldValues[field] = user[field as keyof typeof user];
+        changedFields.push(field);
+      }
+    });
 
     // Actualizar perfil
     const updatedUser = await updateUserProfile(email, updateFields);
 
     if (!updatedUser) {
       throw new NotFoundError("User not found");
+    }
+
+    const newValues: Record<string, any> = {};
+    changedFields.forEach(field => {
+      newValues[field] = updatedUser[field as keyof typeof updatedUser];
+    });
+
+    // Registrar en auditoría si hubo cambios
+    if (changedFields.length > 0) {
+      await logProfileUpdate(
+        'mobile', // Determinar cliente
+        'user',
+        updatedUser.id,
+        email, // Usuario que hizo el cambio (sí mismo)
+        changedFields,
+        oldValues,
+        newValues,
+      );
     }
 
     return {
@@ -160,12 +188,40 @@ export const updateAdminProfileService = async (email: string, tokenAuth: string
     if (Object.keys(updateFields).length === 0) {
       throw new BadRequestError("No fields to update provided", ["Provide at least one field to update"]);
     }
+    const oldValues: Record<string, any> = {};
+    const changedFields: string[] = [];
+
+    Object.keys(updateFields).forEach(field => {
+      if (admin[field as keyof typeof admin] !== updateFields[field as keyof typeof updateFields]) {
+        oldValues[field] = admin[field as keyof typeof admin];
+        changedFields.push(field);
+      }
+    });
 
     // Actualizar perfil
     const updatedAdmin = await updateAdminProfile(email, updateFields);
 
     if (!updatedAdmin) {
       throw new NotFoundError("Admin user not found");
+    }
+
+    // Preparar nuevos valores para la auditoría
+    const newValues: Record<string, any> = {};
+    changedFields.forEach(field => {
+      newValues[field] = updatedAdmin[field as keyof typeof updatedAdmin];
+    });
+
+    // Registrar en auditoría si hubo cambios
+    if (changedFields.length > 0) {
+      await logProfileUpdate(
+        'web', // Determinar cliente
+        'admin',
+        updatedAdmin.id,
+        email, // Usuario que hizo el cambio (sí mismo)
+        changedFields,
+        oldValues,
+        newValues,
+      );
     }
 
     return {
