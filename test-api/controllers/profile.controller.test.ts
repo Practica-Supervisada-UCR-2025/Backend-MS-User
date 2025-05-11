@@ -1,32 +1,72 @@
-import { getUserProfileController, getAdminProfileController } from '../../src/features/users/controllers/profile.controller';
+import { Request, Response, NextFunction } from 'express';
+import { getUserProfileController, getAdminProfileController, updateUserProfileController, updateAdminProfileController } from '../../src/features/users/controllers/profile.controller';
 import * as profileService from '../../src/features/users/services/profile.service';
-import { NotFoundError } from '../../src/utils/errors/api-error';
+import { BadRequestError, NotFoundError } from '../../src/utils/errors/api-error';
+import { AuthenticatedRequest } from '../../src/features/middleware/authenticate.middleware';
+import { Buffer } from 'buffer';
+import * as yup from 'yup';
+import { Readable } from 'stream';
+import multer from 'multer';
 
-// Mock service
+// Mock multer
+jest.mock('multer', () => {
+  return Object.assign(
+    jest.fn().mockReturnValue({
+      single: jest.fn().mockImplementation(() => {
+        return (req: any, res: any, next: any) => {
+          if (req._failMulter) {
+            const error = new Error('File too large');
+            error.name = 'MulterError';
+            return next(error);
+          }
+          next();
+        };
+      })
+    }),
+    {
+      memoryStorage: jest.fn().mockReturnValue({}),
+      diskStorage: jest.fn(),
+      MulterError: jest.fn()
+    }
+  );
+});
+
+// Mock the services
 jest.mock('../../src/features/users/services/profile.service');
 
 describe('Profile Controllers', () => {
-  let req: any;
-  let res: any;
-  let next: jest.Mock;
-
+  let mockReq: Partial<Request> & { user?: any; _failMulter?: boolean };
+  let mockRes: Partial<Response>;
+  let mockNext: jest.MockedFunction<NextFunction>;
+  
   beforeEach(() => {
-    req = {
-      body: {
-        email: 'test@ucr.ac.cr'
-      }
+    mockReq = {
+      user: {
+        email: 'test@ucr.ac.cr',
+        role: 'user',
+        uuid: 'test-uuid-123'
+      },
+      headers: {},
+      get: jest.fn()
     };
-    res = {
+    (mockReq as any).token = 'mock-token';
+    mockReq._failMulter = false;
+
+    mockRes = {
       status: jest.fn().mockReturnThis(),
-      json: jest.fn()
+      json: jest.fn(),
+      setHeader: jest.fn()
     };
-    next = jest.fn();
+    mockNext = jest.fn();
+  });
+
+  afterEach(() => {
     jest.clearAllMocks();
   });
 
   describe('getUserProfileController', () => {
-    it('should return 201 and user profile when profile is found', async () => {
-      const mockProfileData = {
+    it('should return user profile data successfully', async () => {
+      const serviceResponse = {
         message: 'User profile retrieved successfully',
         userData: {
           email: 'test@ucr.ac.cr',
@@ -36,68 +76,294 @@ describe('Profile Controllers', () => {
         }
       };
 
-      (profileService.getUserProfileService as jest.Mock).mockResolvedValueOnce(mockProfileData);
+      (profileService.getUserProfileService as jest.Mock).mockResolvedValueOnce(serviceResponse);
 
-      await getUserProfileController(req, res, next);
+      await getUserProfileController(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
 
       expect(profileService.getUserProfileService).toHaveBeenCalledWith('test@ucr.ac.cr');
-      expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({
-        message: mockProfileData.message,
-        data: mockProfileData.userData
+      expect(mockRes.status).toHaveBeenCalledWith(201);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: serviceResponse.message,
+        data: serviceResponse.userData
       });
-      expect(next).not.toHaveBeenCalled();
     });
 
-    it('should call next with error when service throws an error', async () => {
-      const error = new NotFoundError('User not found');
+    it('should handle errors through next middleware', async () => {
+      const error = new Error('Test error');
       (profileService.getUserProfileService as jest.Mock).mockRejectedValueOnce(error);
 
-      await getUserProfileController(req, res, next);
+      await getUserProfileController(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
 
-      expect(profileService.getUserProfileService).toHaveBeenCalledWith('test@ucr.ac.cr');
-      expect(res.status).not.toHaveBeenCalled();
-      expect(res.json).not.toHaveBeenCalled();
-      expect(next).toHaveBeenCalledWith(error);
+      expect(mockNext).toHaveBeenCalledWith(error);
     });
   });
 
   describe('getAdminProfileController', () => {
-    it('should return 201 and admin profile when profile is found', async () => {
-      const mockProfileData = {
+    beforeEach(() => {
+      mockReq.user = {
+        email: 'admin@ucr.ac.cr',
+        role: 'admin',
+        uuid: 'admin-uuid-123'
+      };
+    });
+
+    it('should return admin profile data successfully', async () => {
+      const serviceResponse = {
         message: 'Admin profile retrieved successfully',
         adminData: {
           email: 'admin@ucr.ac.cr',
-          full_name: 'Admin User',
+          full_name: 'Test Admin',
           profile_picture: 'http://example.com/admin.jpg'
         }
       };
 
-      req.body.email = 'admin@ucr.ac.cr';
-      (profileService.getAdminProfileService as jest.Mock).mockResolvedValueOnce(mockProfileData);
+      (profileService.getAdminProfileService as jest.Mock).mockResolvedValueOnce(serviceResponse);
 
-      await getAdminProfileController(req, res, next);
+      await getAdminProfileController(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
 
       expect(profileService.getAdminProfileService).toHaveBeenCalledWith('admin@ucr.ac.cr');
-      expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({
-        message: mockProfileData.message,
-        data: mockProfileData.adminData
+      expect(mockRes.status).toHaveBeenCalledWith(201);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: serviceResponse.message,
+        data: serviceResponse.adminData
       });
-      expect(next).not.toHaveBeenCalled();
     });
 
-    it('should call next with error when service throws an error', async () => {
-      const error = new NotFoundError('Admin user not found');
-      req.body.email = 'admin@ucr.ac.cr';
+    it('should handle errors through next middleware', async () => {
+      const error = new Error('Test error');
       (profileService.getAdminProfileService as jest.Mock).mockRejectedValueOnce(error);
 
-      await getAdminProfileController(req, res, next);
+      await getAdminProfileController(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
 
-      expect(profileService.getAdminProfileService).toHaveBeenCalledWith('admin@ucr.ac.cr');
-      expect(res.status).not.toHaveBeenCalled();
-      expect(res.json).not.toHaveBeenCalled();
-      expect(next).toHaveBeenCalledWith(error);
+      expect(mockNext).toHaveBeenCalledWith(error);
+    });
+  });
+
+  describe('updateUserProfileController', () => {
+    const createMockFile = () => ({
+      fieldname: 'profile_picture',
+      originalname: 'test.jpg',
+      encoding: '7bit',
+      mimetype: 'image/jpeg',
+      size: 1024,
+      destination: '/tmp',
+      filename: 'test.jpg',
+      path: '/tmp/test.jpg',
+      buffer: Buffer.from('test image'),
+      stream: new Readable()
+    });
+
+    it('should update user profile without image successfully', async () => {
+      const updateData = {
+        username: 'newusername',
+        full_name: 'New Name'
+      };
+
+      const serviceResponse = {
+        message: 'User profile updated successfully',
+        userData: {
+          email: 'test@ucr.ac.cr',
+          username: 'newusername',
+          full_name: 'New Name',
+          profile_picture: 'http://example.com/pic.jpg'
+        }
+      };
+
+      mockReq.body = updateData;
+      (profileService.updateUserProfileService as jest.Mock).mockResolvedValueOnce(serviceResponse);
+
+      await updateUserProfileController(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+
+      expect(profileService.updateUserProfileService).toHaveBeenCalledWith(
+        'test@ucr.ac.cr',
+        'mock-token',
+        updateData
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: serviceResponse.message,
+        data: serviceResponse.userData
+      });
+    });
+
+    it('should update user profile with image successfully', async () => {
+      const updateData = {
+        username: 'newusername'
+      };
+
+      const mockFile = createMockFile();
+
+      const serviceResponse = {
+        message: 'User profile updated successfully',
+        userData: {
+          email: 'test@ucr.ac.cr',
+          username: 'newusername',
+          profile_picture: 'http://example.com/new.jpg'
+        }
+      };
+
+      mockReq.body = updateData;
+      mockReq.file = mockFile;
+      
+      (profileService.updateUserProfileService as jest.Mock).mockResolvedValueOnce(serviceResponse);
+
+      await updateUserProfileController(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+
+      expect(profileService.updateUserProfileService).toHaveBeenCalledWith(
+        'test@ucr.ac.cr',
+        'mock-token',
+        updateData,
+        mockFile.buffer,
+        mockFile.originalname,
+        mockFile.mimetype
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: serviceResponse.message,
+        data: serviceResponse.userData
+      });
+    });
+
+    it('should handle multer errors', async () => {
+      mockReq._failMulter = true;
+      mockReq.body = {};
+
+      await updateUserProfileController(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(expect.any(BadRequestError));
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining('Error upload profile')
+        })
+      );
+    });
+
+    it('should handle validation errors', async () => {
+      const validationError = new yup.ValidationError('Validation failed');
+      mockReq.body = { username: '' };
+
+      (profileService.updateUserProfileService as jest.Mock).mockRejectedValueOnce(validationError);
+
+      await updateUserProfileController(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(expect.any(BadRequestError));
+    });
+  });
+
+  describe('updateAdminProfileController', () => {
+    const createMockFile = () => ({
+      fieldname: 'profile_picture',
+      originalname: 'test.jpg',
+      encoding: '7bit',
+      mimetype: 'image/jpeg',
+      size: 1024,
+      destination: '/tmp',
+      filename: 'test.jpg',
+      path: '/tmp/test.jpg',
+      buffer: Buffer.from('test image'),
+      stream: new Readable()
+    });
+
+    beforeEach(() => {
+      mockReq.user = {
+        email: 'admin@ucr.ac.cr',
+        role: 'admin',
+        uuid: 'admin-uuid-123'
+      };
+    });
+
+    it('should update admin profile without image successfully', async () => {
+      const updateData = {
+        full_name: 'New Admin Name'
+      };
+
+      const serviceResponse = {
+        message: 'Admin profile updated successfully',
+        adminData: {
+          email: 'admin@ucr.ac.cr',
+          full_name: 'New Admin Name',
+          profile_picture: 'http://example.com/admin.jpg'
+        }
+      };
+
+      mockReq.body = updateData;
+      (profileService.updateAdminProfileService as jest.Mock).mockResolvedValueOnce(serviceResponse);
+
+      await updateAdminProfileController(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+
+      expect(profileService.updateAdminProfileService).toHaveBeenCalledWith(
+        'admin@ucr.ac.cr',
+        'mock-token',
+        updateData
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: serviceResponse.message,
+        data: serviceResponse.adminData
+      });
+    });
+
+    it('should update admin profile with image successfully', async () => {
+      const updateData = {
+        full_name: 'New Admin Name'
+      };
+
+      const mockFile = createMockFile();
+
+      const serviceResponse = {
+        message: 'Admin profile updated successfully',
+        adminData: {
+          email: 'admin@ucr.ac.cr',
+          full_name: 'New Admin Name',
+          profile_picture: 'http://example.com/new-admin.jpg'
+        }
+      };
+
+      mockReq.body = updateData;
+      mockReq.file = mockFile;
+      
+      (profileService.updateAdminProfileService as jest.Mock).mockResolvedValueOnce(serviceResponse);
+
+      await updateAdminProfileController(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+
+      expect(profileService.updateAdminProfileService).toHaveBeenCalledWith(
+        'admin@ucr.ac.cr',
+        'mock-token',
+        updateData,
+        mockFile.buffer,
+        mockFile.originalname,
+        mockFile.mimetype
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: serviceResponse.message,
+        data: serviceResponse.adminData
+      });
+    });
+
+    it('should handle multer errors', async () => {
+      mockReq._failMulter = true;
+      mockReq.body = {};
+
+      await updateAdminProfileController(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(expect.any(BadRequestError));
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining('Error upload profile')
+        })
+      );
+    });
+
+    it('should handle validation errors', async () => {
+      const validationError = new yup.ValidationError('Validation failed');
+      mockReq.body = { full_name: '' };
+
+      (profileService.updateAdminProfileService as jest.Mock).mockRejectedValueOnce(validationError);
+
+      await updateAdminProfileController(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(expect.any(BadRequestError));
     });
   });
 });

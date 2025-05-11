@@ -137,4 +137,134 @@ describe('Profile Routes', () => {
       expect(response.status).not.toBe(201);
     });
   });
+
+  describe('PATCH /user/auth/profile', () => {
+    it('should return 200 and updated user profile data when authenticated', async () => {
+      const updateData = {
+        email: 'user@ucr.ac.cr',
+        username: 'updateduser',
+        full_name: 'Updated User',
+        profile_picture: 'http://example.com/new.jpg'
+      };
+
+      const mockUpdateResult = {
+        message: 'User profile updated successfully',
+        userData: {
+          email: 'user@ucr.ac.cr',
+          username: 'updateduser',
+          full_name: 'Updated User',
+          profile_picture: 'http://example.com/new.jpg'
+        }
+      };
+
+      (profileService.updateUserProfileService as jest.Mock).mockResolvedValueOnce(mockUpdateResult);
+
+      const response = await request(app)
+        .patch('/user/auth/profile')
+        .set('Authorization', 'Bearer user-token')
+        .send(updateData);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        message: mockUpdateResult.message,
+        data: mockUpdateResult.userData
+      });
+    });
+
+    it('should return 404 when user profile is not found', async () => {
+      const updateData = {
+        email: 'nonexistent@ucr.ac.cr',
+        username: 'newuser'
+      };
+
+      (profileService.updateUserProfileService as jest.Mock).mockRejectedValueOnce(
+        new NotFoundError('User not found')
+      );
+
+      const response = await request(app)
+        .patch('/user/auth/profile')
+        .set('Authorization', 'Bearer user-token')
+        .send(updateData);
+
+      expect(response.status).toBe(404);
+      expect(response.body).toHaveProperty('message', 'User not found');
+    });
+
+    it('should return error when not authenticated', async () => {
+      const updateData = {
+        email: 'user@ucr.ac.cr',
+        username: 'newuser'
+      };
+
+      const response = await request(app)
+        .patch('/user/auth/profile')
+        .send(updateData);
+
+      expect(response.status).not.toBe(200);
+    });
+  });
+
+  describe('PATCH /admin/auth/profile', () => {
+    it('should return 200 and updated admin profile data when authenticated', async () => {
+      const updateData = {
+        email: 'admin@ucr.ac.cr',
+        full_name: 'Updated Admin',
+        profile_picture: 'http://example.com/new-admin.jpg'
+      };
+
+      const mockUpdateResult = {
+        message: 'Admin profile updated successfully',
+        adminData: {
+          email: 'admin@ucr.ac.cr',
+          full_name: 'Updated Admin',
+          profile_picture: 'http://example.com/new-admin.jpg'
+        }
+      };
+
+      (profileService.updateAdminProfileService as jest.Mock).mockResolvedValueOnce(mockUpdateResult);
+
+      const response = await request(app)
+        .patch('/admin/auth/profile')
+        .set('Authorization', 'Bearer admin-token')
+        .send(updateData);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        message: mockUpdateResult.message,
+        data: mockUpdateResult.adminData
+      });
+    });
+
+    it('should return 404 when admin profile is not found', async () => {
+      const updateData = {
+        email: 'nonexistent@ucr.ac.cr',
+        full_name: 'New Admin'
+      };
+
+      (profileService.updateAdminProfileService as jest.Mock).mockRejectedValueOnce(
+        new NotFoundError('Admin not found')
+      );
+
+      const response = await request(app)
+        .patch('/admin/auth/profile')
+        .set('Authorization', 'Bearer admin-token')
+        .send(updateData);
+
+      expect(response.status).toBe(404);
+      expect(response.body).toHaveProperty('message', 'Admin not found');
+    });
+
+    it('should return error when not authenticated', async () => {
+      const updateData = {
+        email: 'admin@ucr.ac.cr',
+        full_name: 'New Admin'
+      };
+
+      const response = await request(app)
+        .patch('/admin/auth/profile')
+        .send(updateData);
+
+      expect(response.status).not.toBe(200);
+    });
+  });
 });

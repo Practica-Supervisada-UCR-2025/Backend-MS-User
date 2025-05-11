@@ -5,7 +5,7 @@ const mockClient = {
 
 jest.mock('../../src/config/database', () => mockClient);
 
-import { findByEmailUser, createUser, updateUserActiveStatus } from '../../src/features/users/repositories/user.repository';
+import { findByEmailUser, createUser, updateUserActiveStatus, updateUserProfile } from '../../src/features/users/repositories/user.repository';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '../../src/features/users/interfaces/user-entities.interface';
 
@@ -165,6 +165,123 @@ describe('User Repository', () => {
         'UPDATE users SET is_active = $1 WHERE email = $2 RETURNING *',
         [true, 'test@ucr.ac.cr']
       );
+    });
+  });
+
+  describe('updateUserProfile', () => {
+    it('should update user profile successfully', async () => {
+      const mockUser = {
+        id: '1',
+        email: 'test@ucr.ac.cr',
+        full_name: 'Updated User',
+        username: 'updateduser',
+        profile_picture: 'https://example.com/new-pic.jpg',
+        auth_id: 'firebase-auth-id',
+        is_active: true,
+        created_at: new Date(),
+        last_login: null
+      };
+
+      mockClient.query.mockResolvedValueOnce({
+        rows: [mockUser],
+        rowCount: 1
+      });
+
+      const updates = {
+        full_name: 'Updated User',
+        username: 'updateduser',
+        profile_picture: 'https://example.com/new-pic.jpg'
+      };
+
+      const result = await updateUserProfile('test@ucr.ac.cr', updates);
+
+      expect(result).toEqual(mockUser);
+      expect(mockClient.query).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE users SET'),
+        expect.arrayContaining(['updateduser', 'Updated User', 'https://example.com/new-pic.jpg', 'test@ucr.ac.cr'])
+      );
+    });
+
+    it('should update user profile with partial data', async () => {
+      const mockUser = {
+        id: '1',
+        email: 'test@ucr.ac.cr',
+        full_name: 'Updated User',
+        username: 'testuser',
+        profile_picture: 'http://example.com/pic.jpg',
+        auth_id: 'firebase-auth-id',
+        is_active: true,
+        created_at: new Date(),
+        last_login: null
+      };
+
+      mockClient.query.mockResolvedValueOnce({
+        rows: [mockUser],
+        rowCount: 1
+      });
+
+      const updates = {
+        full_name: 'Updated User'
+      };
+
+      const result = await updateUserProfile('test@ucr.ac.cr', updates);
+
+      expect(result).toEqual(mockUser);
+      expect(mockClient.query).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE users SET'),
+        expect.arrayContaining(['Updated User', 'test@ucr.ac.cr'])
+      );
+    });
+
+    it('should return existing user when no updates provided', async () => {
+      const mockUser = {
+        id: '1',
+        email: 'test@ucr.ac.cr',
+        full_name: 'Test User',
+        username: 'testuser',
+        profile_picture: 'http://example.com/pic.jpg',
+        auth_id: 'firebase-auth-id',
+        is_active: true,
+        created_at: new Date(),
+        last_login: null
+      };
+
+      mockClient.query.mockResolvedValueOnce({
+        rows: [mockUser],
+        rowCount: 1
+      });
+
+      const result = await updateUserProfile('test@ucr.ac.cr', {});
+
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should throw error when user not found', async () => {
+      mockClient.query.mockResolvedValueOnce({
+        rows: [],
+        rowCount: 0
+      });
+
+      const updates = {
+        full_name: 'Updated User'
+      };
+
+      await expect(updateUserProfile('nonexistent@ucr.ac.cr', updates))
+        .rejects
+        .toThrow('User with email nonexistent@ucr.ac.cr not found');
+    });
+
+    it('should handle database errors', async () => {
+      const mockError = new Error('Database error');
+      mockClient.query.mockRejectedValueOnce(mockError);
+
+      const updates = {
+        full_name: 'Updated User'
+      };
+
+      await expect(updateUserProfile('test@ucr.ac.cr', updates))
+        .rejects
+        .toThrow('Database error');
     });
   });
 });
