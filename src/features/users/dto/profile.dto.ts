@@ -22,6 +22,10 @@ export const updateUserProfileSchema = yup.object({
     )
     .optional(),
 
+  profile_picture: yup
+    .mixed()
+    .nullable()
+    .optional()
 });
 
 export const updateAdminProfileSchema = yup.object({
@@ -35,6 +39,11 @@ export const updateAdminProfileSchema = yup.object({
       'El nombre completo solo puede contener letras y espacios'
     )
     .optional(),
+    
+  profile_picture: yup
+    .mixed()
+    .nullable()
+    .optional()
 });
 
 export type UpdateUserProfileDTO = yup.InferType<typeof updateUserProfileSchema>;
