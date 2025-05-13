@@ -4,10 +4,11 @@ import { createUser, findByEmailUser } from '../repositories/user.repository';
 import { createAdmin, findByEmailAdmin} from '../repositories/admin.repository';
 // import { sendVerificationEmail } from '../../../utils/notificationClient';
 import { v4 as uuidv4 } from 'uuid';
-import { UnauthorizedError, ConflictError, InternalServerError } from '../../../utils/errors/api-error';
+import { UnauthorizedError, ConflictError, InternalServerError } 
+from '../../../utils/errors/api-error';
+import { DEFAULT_PROFILE_PICTURE } from '../../../utils/constants/image';
 import axios from 'axios';
 
-const DEFAULT_PROFILE_PICTURE = 'https://utfs.io/f/Ri7z8Bp5Nkcu6mKIWdaT84vfYJdV9XQeAOZqrItaMwWcxbph';  // Update with your actual default image URL
 
 async function sendRegistrationConfirmation(email: string, fullName: string, userType: 'mobile' | 'web') {
   try {

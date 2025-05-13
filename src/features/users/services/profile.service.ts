@@ -7,6 +7,7 @@ import { UpdateUserProfileDTO, UpdateAdminProfileDTO } from "../dto/profile.dto"
 import FormData from 'form-data';
 import fetch from 'node-fetch';
 import { logProfileUpdate } from './audit.service';
+import { DEFAULT_PROFILE_PICTURE } from '../../../utils/constants/image';
 
 export const getUserProfileService = async (email: string) => {
   const user = await findByEmailUser(email);
@@ -109,17 +110,19 @@ export const updateUserProfileService = async (email: string, tokenAuth: string,
       updateFields.full_name = updateData.full_name;
     }
 
-    if (fileBuffer && fileName && fileMimeType) {
+    if (updateData.profile_picture === null) {
+      updateFields.profile_picture = DEFAULT_PROFILE_PICTURE;
+    } else if (fileBuffer && fileName && fileMimeType) {
       updateFields.profile_picture = await uploadProfileImage(fileBuffer, fileName, fileMimeType, tokenAuth, user.profile_picture, user.id);
     }
     // Verificar si hay campos para actualizar
     if (Object.keys(updateFields).length === 0) {
       throw new BadRequestError("No fields to update provided", ["Provide at least one field to update"]);
     }
- // Guardar valores actuales antes de la actualización para la auditoría
+    // Guardar valores actuales antes de la actualización para la auditoría
     const oldValues: Record<string, any> = {};
     const changedFields: string[] = [];
-    
+
     Object.keys(updateFields).forEach(field => {
       if (user[field as keyof typeof user] !== updateFields[field as keyof typeof updateFields]) {
         oldValues[field] = user[field as keyof typeof user];
@@ -175,7 +178,7 @@ export const updateAdminProfileService = async (email: string, tokenAuth: string
   try {
 
     const admin = await findByEmailAdmin(email);
-  
+
     if (!admin) {
       throw new NotFoundError("Admin not found");
     }
@@ -186,7 +189,9 @@ export const updateAdminProfileService = async (email: string, tokenAuth: string
       updateFields.full_name = updateData.full_name;
     }
 
-    if (fileBuffer && fileName && fileMimeType) {
+    if (updateData.profile_picture === null) {
+      updateFields.profile_picture = DEFAULT_PROFILE_PICTURE;
+    } else if (fileBuffer && fileName && fileMimeType) {
       updateFields.profile_picture = await uploadProfileImage(fileBuffer, fileName, fileMimeType, tokenAuth, admin.profile_picture, admin.id);
     }
 
