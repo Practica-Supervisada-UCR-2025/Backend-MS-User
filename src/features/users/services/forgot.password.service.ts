@@ -9,10 +9,11 @@ export async function generatePasswordResetLink(email: string): Promise<string> 
     // 1. Generate the password reset link
     const recoveryLink = await admin.auth().generatePasswordResetLink(email);
 
-    await axios.post('http://172.17.0.2:3001/api/email/send-password-reset', {
+    await axios.post('http://backend-notification-app:3001/api/email/send-password-reset', {
       email,
       recoveryLink,
     });
+
 
     return `The recovery email has been sent to ${email}. Follow the instructions in the email to reset your password.`;
   } catch (error) {
