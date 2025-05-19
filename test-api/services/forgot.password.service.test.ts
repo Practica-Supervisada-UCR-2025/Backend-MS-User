@@ -26,7 +26,7 @@ describe('generatePasswordResetLink with static mock', () => {
 
     expect(mockAdmin.auth().generatePasswordResetLink).toHaveBeenCalledWith(email);
     expect(mockedAxiosPost).toHaveBeenCalledWith(
-      'http://172.17.0.2:3001/api/email/send-password-reset',
+      'http://backend-notification-app:3001/api/email/send-password-reset',
       { email, recoveryLink }
     );
     expect(result).toBe(`The recovery email has been sent to userTest@ucr.ac.cr. Follow the instructions in the email to reset your password.`);
