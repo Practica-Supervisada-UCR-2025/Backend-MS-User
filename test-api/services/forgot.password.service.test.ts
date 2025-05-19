@@ -26,16 +26,16 @@ describe('generatePasswordResetLink with static mock', () => {
 
     expect(mockAdmin.auth().generatePasswordResetLink).toHaveBeenCalledWith(email);
     expect(mockedAxiosPost).toHaveBeenCalledWith(
-      'http://172.17.0.2:3001/api/email/send-password-reset',
+      'http://backend-notification-app:3001/api/email/send-password-reset',
       { email, recoveryLink }
     );
-    expect(result).toBe(`Se envio el correo de recuperación a userTest@ucr.ac.cr.Sigue las instrucciones en el correo para restablecer tu contraseña.`);
+    expect(result).toBe(`The recovery email has been sent to userTest@ucr.ac.cr. Follow the instructions in the email to reset your password.`);
   });
 
   it('should throw an error if Firebase generatePasswordResetLink fails', async () => {
     mockAdmin.auth().generatePasswordResetLink.mockRejectedValueOnce(new Error('Firebase error'));
 
-    await expect(generatePasswordResetLink(email)).rejects.toThrow('El correo electrónico no es válido o no está registrado.');
+    await expect(generatePasswordResetLink(email)).rejects.toThrow('The email is not valid or is not registered.');
     expect(mockedAxiosPost).not.toHaveBeenCalled();
   });
 
@@ -43,7 +43,6 @@ describe('generatePasswordResetLink with static mock', () => {
     mockAdmin.auth().generatePasswordResetLink.mockResolvedValueOnce(recoveryLink);
     mockedAxiosPost.mockRejectedValueOnce(new Error('Axios error'));
 
-    await expect(generatePasswordResetLink(email)).rejects.toThrow('El correo electrónico no es válido o no está registrado.');
+    await expect(generatePasswordResetLink(email)).rejects.toThrow('The email is not valid or is not registered.');
   });
-  
 });
