@@ -4,7 +4,7 @@ export class SendRecoveryLinkDto {
   @IsEmail()
   @IsNotEmpty()
   @Matches(/^[\w.-]+@ucr\.ac\.cr$/, {
-    message: 'El correo electrónico debe ser institucional (@ucr.ac.cr)',
+    message: 'The email must be an institutional one (@ucr.ac.cr)',
   })
   email!: string;
 }
