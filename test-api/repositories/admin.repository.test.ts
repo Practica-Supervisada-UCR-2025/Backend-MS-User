@@ -88,7 +88,7 @@ describe('Admin Repository', () => {
       
       expect(mockClient.query).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO admin_users'),
-        [newAdmin.id, newAdmin.email, newAdmin.full_name, newAdmin.auth_id, newAdmin.is_active]
+        [newAdmin.id, newAdmin.email, newAdmin.full_name, newAdmin.auth_id, newAdmin.profile_picture, newAdmin.is_active]
       );
     });
 
