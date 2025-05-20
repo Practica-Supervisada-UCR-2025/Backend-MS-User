@@ -207,7 +207,7 @@ describe('Profile Services', () => {
       );
 
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/files/profile-image'),
+        expect.stringContaining('/api/files/upload'),
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
@@ -388,7 +388,7 @@ describe('Profile Services', () => {
       );
 
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/files/profile-image'),
+        expect.stringContaining('/api/files/upload'),
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
