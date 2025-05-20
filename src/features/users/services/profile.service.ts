@@ -65,7 +65,7 @@ async function uploadProfileImage(
       formData.append('oldImageUrl', oldProfileUrl);
     }
     // Llamar al microservicio MS-Files
-    const filesResponse = await fetch('http://localhost:3006/api/files/profile-image', {
+    const filesResponse = await fetch(`http://${process.env.MS_FILES_URL}/api/files/profile-image`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${tokenAuth}` // Usar el token del usuario

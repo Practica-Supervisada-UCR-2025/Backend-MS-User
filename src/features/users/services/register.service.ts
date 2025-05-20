@@ -13,7 +13,7 @@ import axios from 'axios';
 async function sendRegistrationConfirmation(email: string, fullName: string, userType: 'mobile' | 'web') {
   try {
     // Para producción, usar: 'http://ms-notification:3001/api/email/send-register-confirmation'
-    await axios.post('http://172.17.0.2:3001/api/email/send-register-confirmation', {
+    await axios.post(`http://${process.env.MS_NOTIFICATIONS_URL}/api/email/send-register-confirmation`, {
       email,
       full_name: fullName,
       userType
