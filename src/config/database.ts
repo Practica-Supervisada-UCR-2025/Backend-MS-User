@@ -20,4 +20,9 @@ client.connect()
   .then(() => console.log("Conexión exitosa a PostgreSQL"))
   .catch((err) => console.error("Error de conexión:", err));
 
+console.log('DB envs:', {
+  user: process.env.DB_USER,
+  pass: process.env.DB_PASSWORD,
+});
+
 export default client;
