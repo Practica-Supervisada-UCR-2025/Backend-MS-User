@@ -6,7 +6,7 @@ const mockClient = {
 // Mock the database module
 jest.mock('../../src/config/database', () => mockClient);
 
-import { findByEmailAdmin, createAdmin, updateAdminActiveStatus } from '../../src/features/users/repositories/admin.repository';
+import { findByEmailAdmin, createAdmin, updateAdminActiveStatus, updateAdminProfile } from '../../src/features/users/repositories/admin.repository';
 import { v4 as uuidv4 } from 'uuid';
 import { AdminUser } from '../../src/features/users/interfaces/user-entities.interface';
 
@@ -28,6 +28,7 @@ describe('Admin Repository', () => {
         full_name: 'Admin User',
         auth_id: 'firebase-auth-id-1',
         is_active: true,
+        profile_picture: 'https://example.com/pic.jpg',
         created_at: new Date(),
         last_login: null
       };
@@ -73,6 +74,7 @@ describe('Admin Repository', () => {
         full_name: 'New Admin',
         auth_id: 'firebase-auth-id-2',
         is_active: true,
+        profile_picture: 'https://example.com/new.jpg',
         created_at: new Date(),
         last_login: null
       };
@@ -86,7 +88,7 @@ describe('Admin Repository', () => {
       
       expect(mockClient.query).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO admin_users'),
-        [newAdmin.id, newAdmin.email, newAdmin.full_name, newAdmin.auth_id, newAdmin.is_active]
+        [newAdmin.id, newAdmin.email, newAdmin.full_name, newAdmin.auth_id, newAdmin.profile_picture, newAdmin.is_active]
       );
     });
 
@@ -100,6 +102,7 @@ describe('Admin Repository', () => {
         full_name: 'New Admin',
         auth_id: 'firebase-auth-id-3',
         is_active: true,
+        profile_picture: 'https://example.com/test.jpg',
         created_at: new Date(),
         last_login: null
       };
@@ -116,6 +119,7 @@ describe('Admin Repository', () => {
         full_name: 'Admin User',
         auth_id: 'firebase-auth-id-4',
         is_active: false,
+        profile_picture: 'https://example.com/pic.jpg',
         created_at: new Date(),
         last_login: null
       };
@@ -157,6 +161,119 @@ describe('Admin Repository', () => {
         'UPDATE admin_users SET is_active = $1 WHERE email = $2 RETURNING *',
         [true, 'admin@ucr.ac.cr']
       );
+    });
+  });
+
+  describe('updateAdminProfile', () => {
+    it('should update admin profile successfully', async () => {
+      const mockAdmin = {
+        id: '1',
+        email: 'admin@ucr.ac.cr',
+        full_name: 'Updated Admin',
+        auth_id: 'firebase-auth-id',
+        profile_picture: 'https://example.com/new-pic.jpg',
+        is_active: true,
+        created_at: new Date(),
+        last_login: null
+      };
+
+      mockClient.query.mockResolvedValueOnce({
+        rows: [mockAdmin],
+        rowCount: 1
+      });
+
+      const updates = {
+        full_name: 'Updated Admin',
+        profile_picture: 'https://example.com/new-pic.jpg'
+      };
+
+      const result = await updateAdminProfile('admin@ucr.ac.cr', updates);
+
+      expect(result).toEqual(mockAdmin);
+      expect(mockClient.query).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE admin_users SET'),
+        expect.arrayContaining(['Updated Admin', 'https://example.com/new-pic.jpg', 'admin@ucr.ac.cr'])
+      );
+    });
+
+    it('should update admin profile with partial data', async () => {
+      const mockAdmin = {
+        id: '1',
+        email: 'admin@ucr.ac.cr',
+        full_name: 'Updated Admin',
+        auth_id: 'firebase-auth-id',
+        is_active: true,
+        profile_picture: 'https://example.com/pic.jpg',
+        created_at: new Date(),
+        last_login: null
+      };
+
+      mockClient.query.mockResolvedValueOnce({
+        rows: [mockAdmin],
+        rowCount: 1
+      });
+
+      const updates = {
+        full_name: 'Updated Admin'
+      };
+
+      const result = await updateAdminProfile('admin@ucr.ac.cr', updates);
+
+      expect(result).toEqual(mockAdmin);
+      expect(mockClient.query).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE admin_users SET'),
+        expect.arrayContaining(['Updated Admin', 'admin@ucr.ac.cr'])
+      );
+    });
+
+    it('should return existing admin when no updates provided', async () => {
+      const mockAdmin = {
+        id: '1',
+        email: 'admin@ucr.ac.cr',
+        full_name: 'Admin User',
+        auth_id: 'firebase-auth-id',
+        is_active: true,
+        profile_picture: 'https://example.com/pic.jpg',
+        created_at: new Date(),
+        last_login: null
+      };
+
+      mockClient.query.mockResolvedValueOnce({
+        rows: [mockAdmin],
+        rowCount: 1
+      });
+
+      const result = await updateAdminProfile('admin@ucr.ac.cr', {});
+
+      expect(result).toEqual(mockAdmin);
+    });
+
+    it('should throw error when admin not found', async () => {
+      mockClient.query.mockResolvedValueOnce({
+        rows: [],
+        rowCount: 0
+      });
+
+      const updates = {
+        full_name: 'Updated Admin'
+      };
+
+      await expect(updateAdminProfile('nonexistent@ucr.ac.cr', updates))
+        .rejects
+        .toThrow('Admin with email nonexistent@ucr.ac.cr not found');
+    });
+
+    it('should handle database errors', async () => {
+      const mockError = new Error('Database error');
+      mockClient.query.mockRejectedValueOnce(mockError);
+
+      const updates = {
+        full_name: 'Updated Admin'
+      };
+
+      await expect(updateAdminProfile('admin@ucr.ac.cr', updates))
+        .rejects
+        .toThrow('Database error');
     });
   });
 });

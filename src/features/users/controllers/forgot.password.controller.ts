@@ -9,7 +9,7 @@ export const sendRecoveryLink = async (req: Request, res: Response): Promise<voi
   const errors = await validate(dto);
 
   if (errors.length > 0) {
-    res.status(400).json({ error: 'Formato de email incorrecto. Asegurate que sea el correo institucional.' });
+    res.status(400).json({ error: 'Invalid email format. Make sure it is the institutional email.' });
     return;
   }
 
@@ -19,9 +19,8 @@ export const sendRecoveryLink = async (req: Request, res: Response): Promise<voi
   } catch (err) {
     console.error('[Error sending recovery link]', err);
     res.status(500).json({ 
-      error: 'No se logró enviar el correo de recuperación.',
+      error: 'Failed to send the recovery email.',
       detail: err instanceof Error ? err.message : String(err)
     });
   }
-  
 };

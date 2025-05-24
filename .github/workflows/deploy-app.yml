@@ -36,4 +36,4 @@ jobs:
       DB_PORT: ${{ secrets.DB_PORT }}
       DB_USER: ${{ secrets.DB_USER }}
       FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}
-      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      ANY_ENV_FILE: ${{ secrets.ANY_ENV_FILE }}

@@ -4,15 +4,16 @@ import { createUser, findByEmailUser } from '../repositories/user.repository';
 import { createAdmin, findByEmailAdmin} from '../repositories/admin.repository';
 // import { sendVerificationEmail } from '../../../utils/notificationClient';
 import { v4 as uuidv4 } from 'uuid';
-import { UnauthorizedError, ConflictError, InternalServerError } from '../../../utils/errors/api-error';
+import { UnauthorizedError, ConflictError, InternalServerError } 
+from '../../../utils/errors/api-error';
+import { DEFAULT_PROFILE_PICTURE } from '../../../utils/constants/image';
 import axios from 'axios';
 
-const DEFAULT_PROFILE_PICTURE = 'https://storage.googleapis.com/your-bucket/default-avatar.png';  // Update with your actual default image URL
 
 async function sendRegistrationConfirmation(email: string, fullName: string, userType: 'mobile' | 'web') {
   try {
     // Para producción, usar: 'http://ms-notification:3001/api/email/send-register-confirmation'
-    await axios.post('http://172.17.0.2:3001/api/email/send-register-confirmation', {
+    await axios.post(`http://${process.env.MS_NOTIFICATIONS_URL}/api/email/send-register-confirmation`, {
       email,
       full_name: fullName,
       userType
@@ -78,6 +79,7 @@ export const registerAdminService = async (dto: RegisterDTO, role: string) => {
       id: uuidv4(),
       email: dto.email,
       full_name: dto.full_name,
+      profile_picture: DEFAULT_PROFILE_PICTURE,
       auth_id: dto.auth_id,
       is_active: true,
       created_at: new Date(),
