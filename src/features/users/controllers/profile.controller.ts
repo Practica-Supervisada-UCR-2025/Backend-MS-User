@@ -5,6 +5,8 @@ import * as yup from 'yup';
 import { BadRequestError } from "../../../utils/errors/api-error";
 import multer from 'multer';
 import { AuthenticatedRequest } from '../../middleware/authenticate.middleware';
+import {SearchUsersDTO, searchUsersSchema} from "../../users/dto/search.dto";
+import {searchUsersService} from "../../users/services/search.service";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -159,6 +161,28 @@ export const updateAdminProfileController = async (
       message: result.message,
       data: result.adminData
     });
+  } catch (error) {
+    if (error instanceof yup.ValidationError) {
+      next(new BadRequestError('Validation error', error.errors));
+    } else {
+      next(error);
+    }
+  }
+};
+
+export const getUsersBySearch = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+  try {
+    const validated = await searchUsersSchema.validate(req.query, {
+      abortEarly: false,
+      stripUnknown: true
+    }) as SearchUsersDTO;
+
+    const users = await searchUsersService(validated.name);
+    res.status(200).json({ data: users });
   } catch (error) {
     if (error instanceof yup.ValidationError) {
       next(new BadRequestError('Validation error', error.errors));
