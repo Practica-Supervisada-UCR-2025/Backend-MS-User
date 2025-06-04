@@ -81,7 +81,7 @@ export const updateUserProfile = async (email: string, updates: { username?: str
 
 export const searchUsersByName = async (name: string, limit: number = 5) => {
   const res = await client.query(
-      `SELECT DISTINCT username, full_name ,profile_picture
+      `SELECT DISTINCT username, full_name ,profile_picture, id
      FROM users
      WHERE is_active = TRUE AND (username ILIKE $1 OR full_name ILIKE $1)
      LIMIT $2`,

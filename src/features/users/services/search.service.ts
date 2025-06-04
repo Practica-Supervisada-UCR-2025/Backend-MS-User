@@ -10,6 +10,7 @@ export const searchUsersService = async (name: string) => {
     return users.map(user => ({
         username: user.username,
         user_fullname: user.full_name,
-        profile_picture: user.profile_picture
+        profile_picture: user.profile_picture,
+        id: user.id
     }));
 }
