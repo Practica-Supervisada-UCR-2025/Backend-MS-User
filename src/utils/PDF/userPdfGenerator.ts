@@ -12,7 +12,6 @@ interface UserData {
   auth_id: string;
 }
 
-// Registrar las fuentes
 (pdfMake as any).vfs = (pdfFonts as any).vfs;
 
 export const generateUsersPdf = async (users: UserData[]): Promise<Buffer> => {
@@ -51,7 +50,7 @@ export const generateUsersPdf = async (users: UserData[]): Promise<Buffer> => {
     { text: `Cantidad de usuarios suspendidos: ${suspendedUsers}` },
     '\n\n',
     {
-      style: 'smallTable', // 👈 estilo se aplica aquí
+      style: 'smallTable', 
       table: {
         headerRows: 1,
          widths: ['auto', 'auto', 'auto', 'auto', 'auto', 'auto', '*'],
@@ -66,7 +65,7 @@ export const generateUsersPdf = async (users: UserData[]): Promise<Buffer> => {
       bold: true,
     },
     smallTable: {
-      fontSize: 9, // 🔍 ajustá según legibilidad, 6–8 suele ser el mínimo usable
+      fontSize: 9, 
     },
   },
 };
