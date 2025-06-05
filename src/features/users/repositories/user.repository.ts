@@ -78,3 +78,20 @@ export const updateUserProfile = async (email: string, updates: { username?: str
     throw error;
   }
 };
+
+
+export const getAllUsers = async () => {
+  const result = await client.query(`
+    SELECT 
+      id,
+      email,
+      full_name,
+      username,
+      created_at,
+      is_active,
+      auth_id
+    FROM users
+  `);
+  return result.rows;
+};
+
