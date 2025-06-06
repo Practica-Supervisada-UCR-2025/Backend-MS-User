@@ -5,6 +5,7 @@ import { errorHandler } from './utils/errors/error-handler.middleware';
 import authRoutes from './features/users/routes/login.routes';
 import forgotPasswordRoutes from './features/users/routes/forgot.password.routes';
 import profileRoutes from './features/users/routes/profile.routes';
+import exportUsersPdfRoutes from './features/users/routes/exportUserPdf.routes'; 
 import cors from "cors";
 
 export const app = express();
@@ -22,6 +23,7 @@ app.use('/api', authRoutes);
 app.use('/api/system', systemRoutes);
 app.use('/api', forgotPasswordRoutes);
 app.use('/api', profileRoutes);
+app.use('/api', exportUsersPdfRoutes); // Esto expone: GET /api/users/export/pdf
 // Error handling middleware should be last
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     errorHandler(err, req, res, next);

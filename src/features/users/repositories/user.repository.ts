@@ -79,6 +79,22 @@ export const updateUserProfile = async (email: string, updates: { username?: str
   }
 };
 
+
+export const getAllUsers = async () => {
+  const result = await client.query(`
+    SELECT 
+      id,
+      email,
+      full_name,
+      username,
+      created_at,
+      is_active,
+      auth_id
+    FROM users
+  `);
+  return result.rows;
+};
+
 export const searchUsersByName = async (name: string, limit: number = 5) => {
   const res = await client.query(
       `SELECT DISTINCT username, full_name ,profile_picture, id
