@@ -6,6 +6,7 @@ WORKDIR /app
 # Copy ONLY package files and install dependencies and exclude for now the whole codebase, to get advantage of the caching layers of npm
 COPY package*.json ./
 COPY tsconfig.json ./
+RUN npm install appdynamics@25.4.0
 RUN npm install
 
 # Now copy the rest of the codebase and build the app(we include the .env file in this first stage, which ensures the 'npm run build' command runs succesfully AND 'consume' those credentials)
