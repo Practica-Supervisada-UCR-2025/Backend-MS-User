@@ -8,7 +8,7 @@ const router = Router();
 // Endpoint for web
 router.get('/user/auth/profile', authenticateJWT, getUserProfileController as RequestHandler);
 
-router.get('/user/profile/:id', authenticateJWT, getOtherUserProfileController as RequestHandler);
+router.get('/user/profile/:userId', authenticateJWT, getOtherUserProfileController as RequestHandler);
 
 // Endpoint for mobile
 router.get('/admin/auth/profile', authenticateJWT, getAdminProfileController as RequestHandler);

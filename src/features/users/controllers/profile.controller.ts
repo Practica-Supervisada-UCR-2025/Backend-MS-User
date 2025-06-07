@@ -5,8 +5,9 @@ import * as yup from 'yup';
 import { BadRequestError } from "../../../utils/errors/api-error";
 import multer from 'multer';
 import { AuthenticatedRequest } from '../../middleware/authenticate.middleware';
-import {SearchUsersDTO, searchUsersSchema} from "../../users/dto/search.dto";
-import {searchUsersService} from "../../users/services/search.service";
+import { SearchUsersDTO, searchUsersSchema } from "../../users/dto/search.dto";
+import { searchUsersService } from "../../users/services/search.service";
+import { validate as isUuid } from 'uuid';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -171,9 +172,9 @@ export const updateAdminProfileController = async (
 };
 
 export const getUsersBySearch = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
+  req: Request,
+  res: Response,
+  next: NextFunction
 ) => {
   try {
     const validated = await searchUsersSchema.validate(req.query, {
@@ -192,20 +193,19 @@ export const getUsersBySearch = async (
   }
 };
 
-// En el archivo profile.controller.ts
+
 export const getOtherUserProfileController = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-
+    console.log('Params:', req.params);
     const { userId } = req.params;
-    
-    if (!userId) {
-      throw new BadRequestError('User ID is required');
-    }
 
+    if (!userId || !isUuid(userId)) {
+      return res.status(400).json({ status: 'error', message: 'Valid User ID is required.' });
+    }
     const { message, userData } = await getOtherUserProfileService(userId);
 
     res.status(200).json({

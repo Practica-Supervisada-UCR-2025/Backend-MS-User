@@ -9,6 +9,8 @@ import fetch from 'node-fetch';
 import { logProfileUpdate } from './audit.service';
 import { DEFAULT_PROFILE_PICTURE } from '../../../utils/constants/image';
 
+
+
 export const getUserProfileService = async (email: string) => {
   const user = await findByEmailUser(email);
 
