@@ -34,6 +34,10 @@ export const updateUserActiveStatus = async (email: string, isActive: boolean) =
   }
 };
 
+export const findByIdUser = async (id: string) => {
+  const res = await client.query('SELECT * FROM users WHERE id = $1', [id]);
+  return res.rows.length > 0 ? res.rows[0] : null;
+};
 
 export const updateUserProfile = async (email: string, updates: { username?: string, full_name?: string, profile_picture?: string }) => {
   try {

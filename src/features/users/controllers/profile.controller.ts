@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { getUserProfileService, getAdminProfileService, updateAdminProfileService, updateUserProfileService } from "../services/profile.service";
+import { getUserProfileService, getAdminProfileService, updateAdminProfileService, updateUserProfileService, getOtherUserProfileService } from "../services/profile.service";
 import { updateUserProfileSchema, updateAdminProfileSchema, UpdateUserProfileDTO, UpdateAdminProfileDTO } from "../dto/profile.dto";
 import * as yup from 'yup';
 import { BadRequestError } from "../../../utils/errors/api-error";
@@ -165,5 +165,30 @@ export const updateAdminProfileController = async (
     } else {
       next(error);
     }
+  }
+};
+
+// En el archivo profile.controller.ts
+export const getOtherUserProfileController = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+
+    const { userId } = req.params;
+    
+    if (!userId) {
+      throw new BadRequestError('User ID is required');
+    }
+
+    const { message, userData } = await getOtherUserProfileService(userId);
+
+    res.status(200).json({
+      message: message,
+      data: userData,
+    });
+  } catch (error) {
+    next(error);
   }
 };
