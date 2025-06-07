@@ -1,4 +1,4 @@
-import { findByEmailUser } from "../repositories/user.repository";
+import { findByEmailUser, findByIdUser} from "../repositories/user.repository";
 import { findByEmailAdmin } from "../repositories/admin.repository";
 import { updateUserProfile } from "../repositories/user.repository";
 import { updateAdminProfile } from "../repositories/admin.repository";
@@ -8,6 +8,8 @@ import FormData from 'form-data';
 import fetch from 'node-fetch';
 import { logProfileUpdate } from './audit.service';
 import { DEFAULT_PROFILE_PICTURE } from '../../../utils/constants/image';
+
+
 
 export const getUserProfileService = async (email: string) => {
   const user = await findByEmailUser(email);
@@ -251,4 +253,21 @@ export const updateAdminProfileService = async (email: string, tokenAuth: string
     }
     throw new BadRequestError("Failed to update admin profile", [(error as Error).message]);
   }
+};
+
+export const getOtherUserProfileService = async (userId: string) => {
+  const user = await findByIdUser(userId);
+
+  if (!user) {
+    throw new NotFoundError("User not found");
+  }
+
+  return {
+    message: "User profile retrieved successfully",
+    userData: {
+      username: user.username,
+      full_name: user.full_name,
+      profile_picture: user.profile_picture,
+    },
+  };
 };

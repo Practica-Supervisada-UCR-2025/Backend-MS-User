@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from "express";
-import { getUserProfileService, getAdminProfileService, updateAdminProfileService, updateUserProfileService } from "../services/profile.service";
+import { getUserProfileService, getAdminProfileService, updateAdminProfileService, updateUserProfileService, getOtherUserProfileService } from "../services/profile.service";
 import { updateUserProfileSchema, updateAdminProfileSchema, UpdateUserProfileDTO, UpdateAdminProfileDTO } from "../dto/profile.dto";
 import * as yup from 'yup';
 import { BadRequestError } from "../../../utils/errors/api-error";
 import multer from 'multer';
 import { AuthenticatedRequest } from '../../middleware/authenticate.middleware';
-import {SearchUsersDTO, searchUsersSchema} from "../../users/dto/search.dto";
-import {searchUsersService} from "../../users/services/search.service";
+import { SearchUsersDTO, searchUsersSchema } from "../../users/dto/search.dto";
+import { searchUsersService } from "../../users/services/search.service";
+import { validate as isUuid } from 'uuid';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -171,9 +172,9 @@ export const updateAdminProfileController = async (
 };
 
 export const getUsersBySearch = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
+  req: Request,
+  res: Response,
+  next: NextFunction
 ) => {
   try {
     const validated = await searchUsersSchema.validate(req.query, {
@@ -189,5 +190,29 @@ export const getUsersBySearch = async (
     } else {
       next(error);
     }
+  }
+};
+
+
+export const getOtherUserProfileController = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    console.log('Params:', req.params);
+    const { userId } = req.params;
+
+    if (!userId || !isUuid(userId)) {
+      return res.status(400).json({ status: 'error', message: 'Valid User ID is required.' });
+    }
+    const { message, userData } = await getOtherUserProfileService(userId);
+
+    res.status(200).json({
+      message: message,
+      data: userData,
+    });
+  } catch (error) {
+    next(error);
   }
 };

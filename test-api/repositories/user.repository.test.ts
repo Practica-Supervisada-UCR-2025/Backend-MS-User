@@ -5,7 +5,7 @@ const mockClient = {
 
 jest.mock('../../src/config/database', () => mockClient);
 
-import { findByEmailUser, createUser, updateUserActiveStatus, updateUserProfile } from '../../src/features/users/repositories/user.repository';
+import { findByEmailUser, createUser, updateUserActiveStatus, updateUserProfile, findByIdUser } from '../../src/features/users/repositories/user.repository';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '../../src/features/users/interfaces/user-entities.interface';
 
@@ -282,6 +282,64 @@ describe('User Repository', () => {
       await expect(updateUserProfile('test@ucr.ac.cr', updates))
         .rejects
         .toThrow('Database error');
+    });
+  });
+
+  describe('findByIdUser', () => {
+    it('should find a user by id', async () => {
+      const mockUser: User = {
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        email: 'test@ucr.ac.cr',
+        full_name: 'Test User',
+        username: 'testuser',
+        profile_picture: 'http://example.com/pic.jpg',
+        auth_id: 'firebase-auth-id-1',
+        is_active: true,
+        created_at: new Date(),
+        last_login: null
+      };
+
+      mockClient.query.mockResolvedValueOnce({
+        rows: [mockUser],
+        rowCount: 1
+      });
+
+      const result = await findByIdUser(mockUser.id);
+      
+      expect(result).toEqual(mockUser);
+      expect(mockClient.query).toHaveBeenCalledWith(
+        'SELECT * FROM users WHERE id = $1',
+        [mockUser.id]
+      );
+    });
+
+    it('should return null when user not found', async () => {
+      mockClient.query.mockResolvedValueOnce({
+        rows: [],
+        rowCount: 0
+      });
+
+      const result = await findByIdUser('nonexistent-id');
+      
+      expect(result).toBeNull();
+      expect(mockClient.query).toHaveBeenCalledWith(
+        'SELECT * FROM users WHERE id = $1',
+        ['nonexistent-id']
+      );
+    });
+
+    it('should handle database errors', async () => {
+      const mockError = new Error('Database error');
+      mockClient.query.mockRejectedValueOnce(mockError);
+
+      await expect(findByIdUser('test-id'))
+        .rejects
+        .toThrow('Database error');
+
+      expect(mockClient.query).toHaveBeenCalledWith(
+        'SELECT * FROM users WHERE id = $1',
+        ['test-id']
+      );
     });
   });
 });
