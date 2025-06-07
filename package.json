@@ -52,6 +52,7 @@
     "yup": "^1.6.1"
   },
   "dependencies": {
+    "appdynamics": "^24.12.0",
     "axios": "^1.8.4",
     "backend-ucr-connect": "file:",
     "body-parser": "^1.20.2",
