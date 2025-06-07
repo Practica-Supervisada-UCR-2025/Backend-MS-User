@@ -1,5 +1,5 @@
 import { Router, RequestHandler } from 'express';
-import { getUserProfileController, getAdminProfileController } from '../controllers/profile.controller';
+import { getUserProfileController, getAdminProfileController, getUsersBySearch } from '../controllers/profile.controller';
 import { authenticateJWT } from '../../middleware/authenticate.middleware';
 import { updateUserProfileController, updateAdminProfileController, getOtherUserProfileController } from '../controllers/profile.controller';
 
@@ -17,5 +17,7 @@ router.get('/admin/auth/profile', authenticateJWT, getAdminProfileController as 
 router.patch('/user/auth/profile', authenticateJWT, updateUserProfileController as RequestHandler);
 
 router.patch('/admin/auth/profile', authenticateJWT, updateAdminProfileController as RequestHandler);
+
+router.get('/user/search/', authenticateJWT, getUsersBySearch as RequestHandler);
 
 export default router;
