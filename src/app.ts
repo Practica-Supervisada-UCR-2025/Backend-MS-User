@@ -1,3 +1,15 @@
+// Do NOT remove or move this appdynamics require, it must be on the first line, or else it will not work
+require("appdynamics").profile({
+ controllerHostName: process.env.APP_DYNAMICS_HOST,
+ controllerPort: 443,
+ // If SSL, be sure to enable the next line
+ controllerSslEnabled: true,
+ accountName: process.env.APP_DYNAMICS_ACCOUNT_NAME,
+ accountAccessKey: process.env.APP_DYNAMICS_KEY,
+ applicationName: 'Backend-user-app',
+ tierName: 'Backend-user-tier',
+ nodeName: 'process' // The controller will automatically append the node name with a unique number
+});
 import express, { Request, Response, NextFunction } from 'express';
 import registerRoutes from './features/users/routes/register.routes';
 import systemRoutes from './features/system/routes/system.routes';
