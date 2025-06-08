@@ -6,7 +6,7 @@ const jwtService = new JwtService();
 // Define your test user payload
 const testUserPayload = {
   email: 'testuser@ucr.ac.cr.com',
-  role: 'user',
+  role: 'admin',
   uuid: 'dfd8a500-663c-47e8-9477-3e1405428cfa',
 };
 

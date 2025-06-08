@@ -267,4 +267,61 @@ describe('Profile Routes', () => {
       expect(response.status).not.toBe(200);
     });
   });
+
+  describe('GET /user/profile/:userId', () => {
+    it('should return 200 and other user profile data when authenticated', async () => {
+      const mockProfileData = {
+        message: 'User profile retrieved successfully',
+        userData: {
+          username: 'otheruser',
+          full_name: 'Other User',
+          profile_picture: 'http://example.com/other.jpg'
+        }
+      };
+
+      (profileService.getOtherUserProfileService as jest.Mock).mockResolvedValueOnce(mockProfileData);
+
+      const response = await request(app)
+        .get('/user/profile/123e4567-e89b-12d3-a456-426614174000')
+        .set('Authorization', 'Bearer user-token');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        message: mockProfileData.message,
+        data: mockProfileData.userData
+      });
+    });
+
+    it('should return 400 when userId is not a valid UUID', async () => {
+      const response = await request(app)
+        .get('/user/profile/invalid-id')
+        .set('Authorization', 'Bearer user-token');
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        status: 'error',
+        message: 'Valid User ID is required.'
+      });
+    });
+
+    it('should return 404 when user profile is not found', async () => {
+      (profileService.getOtherUserProfileService as jest.Mock).mockRejectedValueOnce(
+        new NotFoundError('User not found')
+      );
+
+      const response = await request(app)
+        .get('/user/profile/123e4567-e89b-12d3-a456-426614174000')
+        .set('Authorization', 'Bearer user-token');
+
+      expect(response.status).toBe(404);
+      expect(response.body).toHaveProperty('message', 'User not found');
+    });
+
+    it('should return error when not authenticated', async () => {
+      const response = await request(app)
+        .get('/user/profile/123e4567-e89b-12d3-a456-426614174000');
+
+      expect(response.status).not.toBe(200);
+    });
+  });
 });

@@ -1,9 +1,10 @@
 // At the top of your file, update the imports and mocks:
 import { 
-  getUserProfileService, 
-  getAdminProfileService, 
-  updateUserProfileService, 
-  updateAdminProfileService 
+  getUserProfileService,
+  getAdminProfileService,
+  updateUserProfileService,
+  updateAdminProfileService,
+  getOtherUserProfileService
 } from '../../src/features/users/services/profile.service';
 import * as userRepository from '../../src/features/users/repositories/user.repository';
 import * as adminRepository from '../../src/features/users/repositories/admin.repository';
@@ -430,6 +431,44 @@ describe('Profile Services', () => {
       (adminRepository.findByEmailAdmin as jest.Mock).mockResolvedValueOnce(null);
 
       await expect(updateAdminProfileService('nonexistent@ucr.ac.cr', 'token', { full_name: 'New Admin' }))
+        .rejects
+        .toThrow(NotFoundError);
+    });
+  });
+
+  describe('getOtherUserProfileService', () => {
+    it('should return other user profile data when user exists', async () => {
+      const mockUser = {
+        id: '1',
+        email: 'user@ucr.ac.cr',
+        username: 'otheruser',
+        full_name: 'Other User',
+        profile_picture: 'http://example.com/other.jpg',
+        auth_id: 'firebase-auth-id',
+        is_active: true,
+        created_at: new Date(),
+        last_login: null
+      };
+
+      (userRepository.findByIdUser as jest.Mock).mockResolvedValueOnce(mockUser);
+
+      const result = await getOtherUserProfileService('1');
+
+      expect(userRepository.findByIdUser).toHaveBeenCalledWith('1');
+      expect(result).toEqual({
+        message: 'User profile retrieved successfully',
+        userData: {
+          username: mockUser.username,
+          full_name: mockUser.full_name,
+          profile_picture: mockUser.profile_picture
+        }
+      });
+    });
+
+    it('should throw NotFoundError when user does not exist', async () => {
+      (userRepository.findByIdUser as jest.Mock).mockResolvedValueOnce(null);
+
+      await expect(getOtherUserProfileService('nonexistent-id'))
         .rejects
         .toThrow(NotFoundError);
     });
