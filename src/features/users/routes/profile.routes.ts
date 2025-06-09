@@ -1,12 +1,14 @@
 import { Router, RequestHandler } from 'express';
-import { getUserProfileController, getAdminProfileController } from '../controllers/profile.controller';
+import { getUserProfileController, getAdminProfileController, getUsersBySearch } from '../controllers/profile.controller';
 import { authenticateJWT } from '../../middleware/authenticate.middleware';
-import { updateUserProfileController, updateAdminProfileController } from '../controllers/profile.controller';
+import { updateUserProfileController, updateAdminProfileController, getOtherUserProfileController } from '../controllers/profile.controller';
 
 const router = Router();
 
 // Endpoint for web
 router.get('/user/auth/profile', authenticateJWT, getUserProfileController as RequestHandler);
+
+router.get('/user/profile/:userId', authenticateJWT, getOtherUserProfileController as RequestHandler);
 
 // Endpoint for mobile
 router.get('/admin/auth/profile', authenticateJWT, getAdminProfileController as RequestHandler);
@@ -15,5 +17,7 @@ router.get('/admin/auth/profile', authenticateJWT, getAdminProfileController as 
 router.patch('/user/auth/profile', authenticateJWT, updateUserProfileController as RequestHandler);
 
 router.patch('/admin/auth/profile', authenticateJWT, updateAdminProfileController as RequestHandler);
+
+router.get('/user/search/', authenticateJWT, getUsersBySearch as RequestHandler);
 
 export default router;

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { getUserProfileController, getAdminProfileController, updateUserProfileController, updateAdminProfileController } from '../../src/features/users/controllers/profile.controller';
+import { getUserProfileController, getAdminProfileController, updateUserProfileController, updateAdminProfileController, getOtherUserProfileController } from '../../src/features/users/controllers/profile.controller';
 import * as profileService from '../../src/features/users/services/profile.service';
 import { BadRequestError, NotFoundError } from '../../src/utils/errors/api-error';
 import { AuthenticatedRequest } from '../../src/features/middleware/authenticate.middleware';
@@ -35,7 +35,11 @@ jest.mock('multer', () => {
 jest.mock('../../src/features/users/services/profile.service');
 
 describe('Profile Controllers', () => {
-  let mockReq: Partial<Request> & { user?: any; _failMulter?: boolean };
+  let mockReq: Partial<Request> & {
+    user?: any;
+    _failMulter?: boolean;
+    params: Record<string, string>;
+  };
   let mockRes: Partial<Response>;
   let mockNext: jest.MockedFunction<NextFunction>;
   
@@ -47,7 +51,8 @@ describe('Profile Controllers', () => {
         uuid: 'test-uuid-123'
       },
       headers: {},
-      get: jest.fn()
+      get: jest.fn(),
+      params: {}
     };
     (mockReq as any).token = 'mock-token';
     mockReq._failMulter = false;
@@ -364,6 +369,73 @@ describe('Profile Controllers', () => {
       await updateAdminProfileController(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(BadRequestError));
+    });
+  });
+
+  describe('getOtherUserProfileController', () => {
+    const validUserId = '123e4567-e89b-12d3-a456-426614174000';
+
+    beforeEach(() => {
+      mockReq.params = { userId: validUserId };
+    });
+
+    it('should return other user profile data successfully', async () => {
+      const serviceResponse = {
+        message: 'User profile retrieved successfully',
+        userData: {
+          username: 'otheruser',
+          full_name: 'Other User',
+          profile_picture: 'http://example.com/other.jpg'
+        }
+      };
+
+      (profileService.getOtherUserProfileService as jest.Mock).mockResolvedValueOnce(serviceResponse);
+
+      await getOtherUserProfileController(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+
+      expect(profileService.getOtherUserProfileService).toHaveBeenCalledWith(validUserId);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: serviceResponse.message,
+        data: serviceResponse.userData
+      });
+    });
+
+    it('should return 400 when userId is invalid', async () => {
+      mockReq.params = { userId: 'invalid-uuid' };
+
+      await getOtherUserProfileController(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        status: 'error',
+        message: 'Valid User ID is required.'
+      });
+      expect(profileService.getOtherUserProfileService).not.toHaveBeenCalled();
+    });
+
+    it('should handle not found error', async () => {
+      (profileService.getOtherUserProfileService as jest.Mock).mockRejectedValueOnce(
+        new NotFoundError('User not found')
+      );
+
+      await getOtherUserProfileController(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(expect.any(NotFoundError));
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'User not found'
+        })
+      );
+    });
+
+    it('should handle general errors through next middleware', async () => {
+      const error = new Error('Test error');
+      (profileService.getOtherUserProfileService as jest.Mock).mockRejectedValueOnce(error);
+
+      await getOtherUserProfileController(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(error);
     });
   });
 });

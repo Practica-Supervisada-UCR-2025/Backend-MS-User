@@ -5,6 +5,7 @@ yarn-debug.log
 yarn-error.log
 
 # Firebase configuration files
+src/firebase-service-account.json
 firebase-service-account.json
 
 # Environment variables
