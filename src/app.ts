@@ -20,7 +20,6 @@ import profileRoutes from './features/users/routes/profile.routes';
 import exportUsersPdfRoutes from './features/users/routes/exportUserPdf.routes'; 
 import getAllUsersRoutes from './features/users/routes/getAllUsers.routes';
 import cors from "cors";
-import { get } from 'axios';
 
 
 export const app = express();
@@ -38,8 +37,8 @@ app.use('/api', authRoutes);
 app.use('/api/system', systemRoutes);
 app.use('/api', forgotPasswordRoutes);
 app.use('/api', profileRoutes);
-app.use('/api', exportUsersPdfRoutes); // Esto expone: GET /api/users/export/pdf
-app.use('/api', getAllUsersRoutes); // Esto expone: GET /api/users/active
+app.use('/api', exportUsersPdfRoutes);
+app.use('/api', getAllUsersRoutes);
 // Error handling middleware should be last
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     errorHandler(err, req, res, next);
