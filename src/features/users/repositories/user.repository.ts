@@ -1,5 +1,6 @@
 import client from '../../../config/database';
 import { User } from '../interfaces/user-entities.interface';
+import { GetAllUsersQueryDto } from '../dto/getAllUsers.dto';
 
 export const findByEmailUser = async (email: string) => {
   const res = await client.query('SELECT * FROM users WHERE email = $1', [email]);
@@ -104,4 +105,32 @@ export const searchUsersByName = async (name: string, limit: number = 5) => {
       [`%${name}%`, limit]
   );
   return res.rows;
+};
+
+export const getAllUsersRepository = async (dto: GetAllUsersQueryDto) => {
+  const { created_after, limit } = dto;
+
+  const dataQuery = `
+    SELECT id, email, full_name, username, profile_picture, is_active, created_at, auth_id
+    FROM users
+    WHERE is_active = true AND created_at > $1
+    ORDER BY created_at ASC
+    LIMIT $2
+  `;
+
+  const countQuery = `
+    SELECT COUNT(*) AS total
+    FROM users
+    WHERE is_active = true AND created_at > $1
+  `;
+
+  const dataPromise = client.query(dataQuery, [created_after, limit]);
+  const countPromise = client.query(countQuery, [created_after]);
+
+  const [dataResult, countResult] = await Promise.all([dataPromise, countPromise]);
+
+  return {
+    users: dataResult.rows,
+    totalRemaining: parseInt(countResult.rows[0].total, 10),
+  };
 };
