@@ -4,6 +4,6 @@ import { authenticateJWT } from '../../middleware/authenticate.middleware';
 
 const router = Router();
 
-router.get('/users/active', authenticateJWT, getAllUsersController as RequestHandler);
+router.get('/users/get/all', authenticateJWT, getAllUsersController as RequestHandler);
 
 export default router;
