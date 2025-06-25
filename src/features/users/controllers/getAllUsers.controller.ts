@@ -5,13 +5,25 @@ import { plainToInstance } from 'class-transformer';
 import { getAllUsersService } from '../services/getAllUsers.service';
 
 export const getAllUsersController = async (req: Request, res: Response): Promise<void> => {
-  const raw = {
-    created_after: req.query.created_after,
-    limit: parseInt(req.query.limit as string, 10),
-  };
+ const raw = {
+  created_after: req.query.created_after,
+  limit: req.query.limit !== undefined ? parseInt(req.query.limit as string, 10) : undefined,
+  username: req.query.username,
+};
 
   const dto = plainToInstance(GetAllUsersQueryDto, raw);
   const errors = await validate(dto);
+
+    if (
+    (dto.limit !== undefined && dto.created_after === undefined) ||
+    (dto.limit === undefined && dto.created_after !== undefined)
+  ) {
+    res.status(400).json({
+      error: 'Invalid query parameters.',
+      messages: ['limit and created_after must be provided together or omitted together'],
+    });
+    return;
+  }
 
   if (errors.length > 0) {
     const messages = errors.flatMap(err =>

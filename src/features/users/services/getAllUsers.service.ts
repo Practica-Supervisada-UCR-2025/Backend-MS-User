@@ -1,5 +1,5 @@
 import { GetAllUsersQueryDto } from '../dto/getAllUsers.dto';
-import { getAllUsersRepository } from '../repositories/user.repository';
+import { getAllUsersRepository, getUserByUsernameRepository } from '../repositories/user.repository';
 
 interface User {
   id: string;
@@ -12,9 +12,35 @@ interface User {
 }
 
 export const getAllUsersService = async (dto: GetAllUsersQueryDto) => {
+  if (dto.username !== undefined) {
+    const user = await getUserByUsernameRepository(dto.username);
+
+    if (!user) {
+      return {
+        message: 'User not found',
+        data: [],
+        metadata: {
+          last_time: null,
+          remainingItems: 0,
+          remainingPages: 0,
+        },
+      };
+    }
+
+    return {
+      message: 'User fetched successfully',
+      data: [user],
+      metadata: {
+        last_time: user.created_at,
+        remainingItems: 0,
+        remainingPages: 0,
+      },
+    };
+  }
+
   const { users, totalRemaining } = await getAllUsersRepository(dto);
 
-  const formattedUsers: User[] = users.map((user: User): User => ({
+  const formattedUsers: User[] = users.map((user): User => ({
     id: user.id,
     email: user.email,
     full_name: user.full_name,
@@ -35,7 +61,10 @@ export const getAllUsersService = async (dto: GetAllUsersQueryDto) => {
     metadata: {
       last_time: lastTime,
       remainingItems: totalRemaining - formattedUsers.length,
-      remainingPages: Math.ceil((totalRemaining - formattedUsers.length) / dto.limit),
+      remainingPages: dto.limit
+        ? Math.ceil((totalRemaining - formattedUsers.length) / dto.limit)
+        : null,
     },
   };
 };
+

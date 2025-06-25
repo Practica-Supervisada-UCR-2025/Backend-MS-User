@@ -134,3 +134,16 @@ export const getAllUsersRepository = async (dto: GetAllUsersQueryDto) => {
     totalRemaining: parseInt(countResult.rows[0].total, 10),
   };
 };
+
+export const getUserByUsernameRepository = async (username: string) => {
+  const query = `
+    SELECT id, email, full_name, username, profile_picture, is_active, created_at, auth_id
+    FROM users
+    WHERE is_active = true AND username = $1
+    LIMIT 1
+  `;
+
+  const result = await client.query(query, [username]);
+
+  return result.rows[0] || null;
+};
