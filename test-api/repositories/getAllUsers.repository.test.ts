@@ -1,11 +1,14 @@
-import { getAllUsersRepository } from '../../src/features/users/repositories/user.repository';
-import db from '../../src/config/database';;
+import {
+  getAllUsersRepository,
+  getUserByUsernameRepository,
+} from '../../src/features/users/repositories/user.repository';
+import db from '../../src/config/database';
 
 jest.mock('../../src/config/database', () => ({
   query: jest.fn(),
 }));
 
-describe('getAllUsersRepository', () => {
+describe('user.repository', () => {
   const mockUsers = [
     {
       id: 'user-1',
@@ -35,24 +38,52 @@ describe('getAllUsersRepository', () => {
     jest.clearAllMocks();
   });
 
-  it('should return users and totalRemaining count', async () => {
-    (db.query as jest.Mock).mockImplementationOnce(() =>
-  Promise.resolve({ rows: mockUsers })
-).mockImplementationOnce(() =>
-  Promise.resolve({ rows: mockCount })
-);
-    const dto = {
-      created_after: '2025-06-01T00:00:00Z',
-      limit: 2,
-    };
+  describe('getAllUsersRepository', () => {
+    it('should return users and totalRemaining count', async () => {
+      (db.query as jest.Mock)
+        .mockImplementationOnce(() => Promise.resolve({ rows: mockUsers }))
+        .mockImplementationOnce(() => Promise.resolve({ rows: mockCount }));
 
-    const result = await getAllUsersRepository(dto);
+      const dto = {
+        created_after: '2025-06-01T00:00:00Z',
+        limit: 2,
+      };
 
-    expect(result.users).toEqual(mockUsers);
-    expect(result.totalRemaining).toBe(10);
+      const result = await getAllUsersRepository(dto);
 
-    expect(db.query).toHaveBeenCalledTimes(2);
-    expect(db.query).toHaveBeenCalledWith(expect.stringContaining('SELECT COUNT'), [dto.created_after]);
-    expect(db.query).toHaveBeenCalledWith(expect.stringContaining('SELECT id'), [dto.created_after, dto.limit]);
+      expect(result.users).toEqual(mockUsers);
+      expect(result.totalRemaining).toBe(10);
+
+      expect(db.query).toHaveBeenCalledTimes(2);
+      expect(db.query).toHaveBeenCalledWith(expect.stringContaining('SELECT id'), [dto.created_after, dto.limit]);
+      expect(db.query).toHaveBeenCalledWith(expect.stringContaining('SELECT COUNT'), [dto.created_after]);
+    });
+  });
+
+  describe('getUserByUsernameRepository', () => {
+    it('should return a user if found', async () => {
+      const mockUser = mockUsers[0];
+
+      (db.query as jest.Mock).mockResolvedValueOnce({ rows: [mockUser] });
+
+      const result = await getUserByUsernameRepository('testuser');
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+      expect(db.query).toHaveBeenCalledWith(
+        expect.stringContaining('WHERE is_active = true AND username = $1'),
+        ['testuser']
+      );
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should return null if no user is found', async () => {
+      (db.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
+
+      const result = await getUserByUsernameRepository('unknownuser');
+
+      expect(db.query).toHaveBeenCalledTimes(1);
+      expect(db.query).toHaveBeenCalledWith(expect.any(String), ['unknownuser']);
+      expect(result).toBeNull();
+    });
   });
 });

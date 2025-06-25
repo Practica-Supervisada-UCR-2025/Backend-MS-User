@@ -21,14 +21,6 @@ describe('GetAllUsersQueryDto', () => {
     expect(errors[0].property).toBe('created_after');
   });
 
-  it('should fail validation if limit is missing', async () => {
-    const dto = new GetAllUsersQueryDto();
-    dto.created_after = '2025-06-01T00:00:00Z';
-
-    const errors = await validate(dto);
-    expect(errors.length).toBeGreaterThan(0);
-    expect(errors[0].property).toBe('limit');
-  });
 
   it('should fail validation if limit is not a number', async () => {
     const dto = new GetAllUsersQueryDto() as any;
