@@ -7,14 +7,14 @@ const mockAdmin = {
 jest.mock('../../src/config/firebase', () => mockAdmin);
 jest.mock('../../src/features/users/services/jwt.service');
 
+jest.mock('../../src/features/users/repositories/suspension.repository', () => ({
+  isUserSuspended: jest.fn().mockResolvedValue(false),
+}));
+
 import { Request, Response, NextFunction } from 'express';
 import { authenticateJWT, validateAuth } from '../../src/features/middleware/authenticate.middleware';
 import { JwtService } from '../../src/features/users/services/jwt.service';
 import { UnauthorizedError } from '../../src/utils/errors/api-error';
-
-jest.mock('../../src/features/users/repositories/suspension.repository', () => ({
-  isUserSuspended: jest.fn().mockResolvedValue(false),
-}));
 
 describe('Authentication Middleware', () => {
   let mockRequest: Partial<Request>;
@@ -34,14 +34,12 @@ describe('Authentication Middleware', () => {
   describe('authenticateJWT', () => {
     it('should throw UnauthorizedError when no token provided', () => {
       authenticateJWT(
-        mockRequest as Request,
-        mockResponse as Response,
-        nextFunction
+          mockRequest as Request,
+          mockResponse as Response,
+          nextFunction
       );
 
-      expect(nextFunction).toHaveBeenCalledWith(
-        expect.any(UnauthorizedError)
-      );
+      expect(nextFunction).toHaveBeenCalledWith(expect.any(UnauthorizedError));
       const error = (nextFunction as jest.Mock).mock.calls[0][0];
       expect(error.message).toBe('No token provided');
     });
@@ -50,14 +48,12 @@ describe('Authentication Middleware', () => {
       mockRequest.headers = { authorization: 'InvalidFormat token123' };
 
       authenticateJWT(
-        mockRequest as Request,
-        mockResponse as Response,
-        nextFunction
+          mockRequest as Request,
+          mockResponse as Response,
+          nextFunction
       );
 
-      expect(nextFunction).toHaveBeenCalledWith(
-        expect.any(UnauthorizedError)
-      );
+      expect(nextFunction).toHaveBeenCalledWith(expect.any(UnauthorizedError));
       const error = (nextFunction as jest.Mock).mock.calls[0][0];
       expect(error.message).toBe('Invalid token format');
     });
@@ -66,14 +62,12 @@ describe('Authentication Middleware', () => {
       mockRequest.headers = { authorization: 'Bearer ' };
 
       authenticateJWT(
-        mockRequest as Request,
-        mockResponse as Response,
-        nextFunction
+          mockRequest as Request,
+          mockResponse as Response,
+          nextFunction
       );
 
-      expect(nextFunction).toHaveBeenCalledWith(
-        expect.any(UnauthorizedError)
-      );
+      expect(nextFunction).toHaveBeenCalledWith(expect.any(UnauthorizedError));
       const error = (nextFunction as jest.Mock).mock.calls[0][0];
       expect(error.message).toBe('Invalid token format');
     });
@@ -81,13 +75,13 @@ describe('Authentication Middleware', () => {
     it('should set user role to admin when token is valid with admin role', async () => {
       mockRequest.headers = { authorization: 'Bearer validToken' };
       const mockDecodedToken = { role: 'admin', email: 'example@ucr.ac.cr', uuid: '123456789101' };
-      
+
       (JwtService.prototype.verifyToken as jest.Mock).mockReturnValue(mockDecodedToken);
 
       await authenticateJWT(
-        mockRequest as Request,
-        mockResponse as Response,
-        nextFunction
+          mockRequest as Request,
+          mockResponse as Response,
+          nextFunction
       );
 
       expect(nextFunction).toHaveBeenCalledWith();
@@ -97,13 +91,13 @@ describe('Authentication Middleware', () => {
     it('should set user role to user when token is valid with non-admin role', async () => {
       mockRequest.headers = { authorization: 'Bearer validToken' };
       const mockDecodedToken = { role: 'user', email: 'example@ucr.ac.cr', uuid: '123456789101' };
-      
+
       (JwtService.prototype.verifyToken as jest.Mock).mockReturnValue(mockDecodedToken);
 
       await authenticateJWT(
-        mockRequest as Request,
-        mockResponse as Response,
-        nextFunction
+          mockRequest as Request,
+          mockResponse as Response,
+          nextFunction
       );
 
       expect(nextFunction).toHaveBeenCalledWith();
@@ -117,14 +111,12 @@ describe('Authentication Middleware', () => {
       (JwtService.prototype.verifyToken as jest.Mock).mockReturnValue(mockDecodedToken);
 
       await authenticateJWT(
-        mockRequest as Request,
-        mockResponse as Response,
-        nextFunction
+          mockRequest as Request,
+          mockResponse as Response,
+          nextFunction
       );
 
-      expect(nextFunction).toHaveBeenCalledWith(
-        expect.any(UnauthorizedError)
-      );
+      expect(nextFunction).toHaveBeenCalledWith(expect.any(UnauthorizedError));
       const error = (nextFunction as jest.Mock).mock.calls[0][0];
       expect(error.message).toBe('Unauthorized');
       expect(error.details).toEqual(['Not registered user']);
@@ -153,15 +145,15 @@ describe('Authentication Middleware', () => {
       expect((mockRequest as any).user.role).toBe('admin');
     });
 
-    it('should allow access when admin is suspended', async () => {
+    it('should throw ForbiddenError when non-admin user is suspended', async () => {
       const { isUserSuspended } = require('../../src/features/users/repositories/suspension.repository');
-      (isUserSuspended as jest.Mock).mockResolvedValueOnce(true); // still suspended
+      (isUserSuspended as jest.Mock).mockResolvedValueOnce(true); // ← simulate suspension
 
       mockRequest.headers = { authorization: 'Bearer validToken' };
       const mockDecodedToken = {
-        role: 'admin',
-        email: 'admin@ucr.ac.cr',
-        uuid: 'admin123'
+        role: 'user',
+        email: 'example@ucr.ac.cr',
+        uuid: '123456789101'
       };
 
       (JwtService.prototype.verifyToken as jest.Mock).mockReturnValue(mockDecodedToken);
@@ -172,20 +164,20 @@ describe('Authentication Middleware', () => {
           nextFunction
       );
 
-      expect(nextFunction).toHaveBeenCalledWith(); // admin should be allowed
-      expect((mockRequest as any).user.role).toBe('admin');
+      const error = (nextFunction as jest.Mock).mock.calls[0][0];
+      expect(error.name).toBe('ForbiddenError');
+      expect(error.message).toBe('Unauthorized');
+      expect(error.details).toContain('User suspended');
     });
-
-
-
   });
 
+  // validateAuth se mantiene igual
   describe('validateAuth', () => {
     it('should throw UnauthorizedError when no auth_token provided', async () => {
       await validateAuth(
-        mockRequest as Request,
-        mockResponse as Response,
-        nextFunction
+          mockRequest as Request,
+          mockResponse as Response,
+          nextFunction
       );
 
       const error = (nextFunction as jest.Mock).mock.calls[0][0];
@@ -200,9 +192,9 @@ describe('Authentication Middleware', () => {
       mockAdmin.verifyIdToken.mockRejectedValue(new Error('Invalid token'));
 
       await validateAuth(
-        mockRequest as Request,
-        mockResponse as Response,
-        nextFunction
+          mockRequest as Request,
+          mockResponse as Response,
+          nextFunction
       );
 
       const error = (nextFunction as jest.Mock).mock.calls[0][0];
@@ -217,9 +209,9 @@ describe('Authentication Middleware', () => {
       mockAdmin.verifyIdToken.mockResolvedValue({});
 
       await validateAuth(
-        mockRequest as Request,
-        mockResponse as Response,
-        nextFunction
+          mockRequest as Request,
+          mockResponse as Response,
+          nextFunction
       );
 
       expect(nextFunction).toHaveBeenCalledWith();
@@ -230,9 +222,9 @@ describe('Authentication Middleware', () => {
       mockRequest.body = { auth_token: '' };
 
       await validateAuth(
-        mockRequest as Request,
-        mockResponse as Response,
-        nextFunction
+          mockRequest as Request,
+          mockResponse as Response,
+          nextFunction
       );
 
       const error = (nextFunction as jest.Mock).mock.calls[0][0];
@@ -246,9 +238,9 @@ describe('Authentication Middleware', () => {
       mockAdmin.verifyIdToken.mockRejectedValueOnce(new Error('Unexpected error'));
 
       await validateAuth(
-        mockRequest as Request,
-        mockResponse as Response,
-        nextFunction
+          mockRequest as Request,
+          mockResponse as Response,
+          nextFunction
       );
 
       const error = (nextFunction as jest.Mock).mock.calls[0][0];
@@ -256,56 +248,5 @@ describe('Authentication Middleware', () => {
       expect(error.message).toBe('Unauthorized');
       expect(error.details).toEqual(['Invalid auth token']);
     });
-  });
-});
-
-describe('validateAuth Middleware', () => {
-  let mockReq: Partial<Request>;
-  let mockRes: Partial<Response>;
-  let mockNext: jest.Mock<NextFunction>;
-
-  beforeEach(() => {
-    mockReq = {
-      body: {}
-    };
-    mockRes = {};
-    mockNext = jest.fn();
-    jest.clearAllMocks();
-  });
-
-  it('should call next() when auth token is valid', async () => {
-    mockReq.body = { auth_token: 'valid-token' };
-    mockAdmin.verifyIdToken.mockResolvedValueOnce({});
-
-    await validateAuth(mockReq as Request, mockRes as Response, mockNext);
-
-    expect(mockAdmin.verifyIdToken).toHaveBeenCalledWith('valid-token');
-    expect(mockNext).toHaveBeenCalledWith();
-  });
-
-  it('should throw UnauthorizedError when no auth token is provided', async () => {
-    await validateAuth(mockReq as Request, mockRes as Response, mockNext);
-
-    expect(mockNext).toHaveBeenCalledWith(
-      expect.any(UnauthorizedError)
-    );
-    const error = mockNext.mock.calls[0][0] as UnauthorizedError;
-    expect(error.message).toBe('Unauthorized');
-    expect(error.details).toEqual(['No auth token provided']);
-  });
-
-  it('should throw UnauthorizedError when auth token is invalid', async () => {
-    mockReq.body = { auth_token: 'invalid-token' };
-    mockAdmin.verifyIdToken.mockRejectedValueOnce(new Error('Invalid token'));
-
-    await validateAuth(mockReq as Request, mockRes as Response, mockNext);
-
-    expect(mockAdmin.verifyIdToken).toHaveBeenCalledWith('invalid-token');
-    expect(mockNext).toHaveBeenCalledWith(
-      expect.any(UnauthorizedError)
-    );
-    const error = mockNext.mock.calls[0][0] as UnauthorizedError;
-    expect(error.message).toBe('Unauthorized');
-    expect(error.details).toEqual(['Invalid auth token']);
   });
 });
