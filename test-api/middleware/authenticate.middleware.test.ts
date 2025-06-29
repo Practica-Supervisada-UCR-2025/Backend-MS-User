@@ -129,6 +129,55 @@ describe('Authentication Middleware', () => {
       expect(error.message).toBe('Unauthorized');
       expect(error.details).toEqual(['Not registered user']);
     });
+
+    it('should allow access when admin is suspended', async () => {
+      const { isUserSuspended } = require('../../src/features/users/repositories/suspension.repository');
+      (isUserSuspended as jest.Mock).mockResolvedValueOnce(true); // still suspended
+
+      mockRequest.headers = { authorization: 'Bearer validToken' };
+      const mockDecodedToken = {
+        role: 'admin',
+        email: 'admin@ucr.ac.cr',
+        uuid: 'admin123'
+      };
+
+      (JwtService.prototype.verifyToken as jest.Mock).mockReturnValue(mockDecodedToken);
+
+      await authenticateJWT(
+          mockRequest as Request,
+          mockResponse as Response,
+          nextFunction
+      );
+
+      expect(nextFunction).toHaveBeenCalledWith(); // admin should be allowed
+      expect((mockRequest as any).user.role).toBe('admin');
+    });
+
+    it('should allow access when admin is suspended', async () => {
+      const { isUserSuspended } = require('../../src/features/users/repositories/suspension.repository');
+      (isUserSuspended as jest.Mock).mockResolvedValueOnce(true); // still suspended
+
+      mockRequest.headers = { authorization: 'Bearer validToken' };
+      const mockDecodedToken = {
+        role: 'admin',
+        email: 'admin@ucr.ac.cr',
+        uuid: 'admin123'
+      };
+
+      (JwtService.prototype.verifyToken as jest.Mock).mockReturnValue(mockDecodedToken);
+
+      await authenticateJWT(
+          mockRequest as Request,
+          mockResponse as Response,
+          nextFunction
+      );
+
+      expect(nextFunction).toHaveBeenCalledWith(); // admin should be allowed
+      expect((mockRequest as any).user.role).toBe('admin');
+    });
+
+
+
   });
 
   describe('validateAuth', () => {
