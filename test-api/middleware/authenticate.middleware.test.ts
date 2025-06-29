@@ -12,6 +12,10 @@ import { authenticateJWT, validateAuth } from '../../src/features/middleware/aut
 import { JwtService } from '../../src/features/users/services/jwt.service';
 import { UnauthorizedError } from '../../src/utils/errors/api-error';
 
+jest.mock('../../src/features/users/repositories/suspension.repository', () => ({
+  isUserSuspended: jest.fn().mockResolvedValue(false),
+}));
+
 describe('Authentication Middleware', () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
@@ -74,13 +78,13 @@ describe('Authentication Middleware', () => {
       expect(error.message).toBe('Invalid token format');
     });
 
-    it('should set user role to admin when token is valid with admin role', () => {
+    it('should set user role to admin when token is valid with admin role', async () => {
       mockRequest.headers = { authorization: 'Bearer validToken' };
       const mockDecodedToken = { role: 'admin', email: 'example@ucr.ac.cr', uuid: '123456789101' };
       
       (JwtService.prototype.verifyToken as jest.Mock).mockReturnValue(mockDecodedToken);
 
-      authenticateJWT(
+      await authenticateJWT(
         mockRequest as Request,
         mockResponse as Response,
         nextFunction
@@ -90,13 +94,13 @@ describe('Authentication Middleware', () => {
       expect((mockRequest as any).user.role).toBe('admin');
     });
 
-    it('should set user role to user when token is valid with non-admin role', () => {
+    it('should set user role to user when token is valid with non-admin role', async () => {
       mockRequest.headers = { authorization: 'Bearer validToken' };
       const mockDecodedToken = { role: 'user', email: 'example@ucr.ac.cr', uuid: '123456789101' };
       
       (JwtService.prototype.verifyToken as jest.Mock).mockReturnValue(mockDecodedToken);
 
-      authenticateJWT(
+      await authenticateJWT(
         mockRequest as Request,
         mockResponse as Response,
         nextFunction
@@ -106,13 +110,13 @@ describe('Authentication Middleware', () => {
       expect((mockRequest as any).user.role).toBe('user');
     });
 
-    it('should throw UnauthorizedError when token is valid but missing email', () => {
+    it('should throw UnauthorizedError when token is valid but missing email', async () => {
       mockRequest.headers = { authorization: 'Bearer validToken' };
       const mockDecodedToken = { role: 'user', uuid: '123456789101' }; // no email
 
       (JwtService.prototype.verifyToken as jest.Mock).mockReturnValue(mockDecodedToken);
 
-      authenticateJWT(
+      await authenticateJWT(
         mockRequest as Request,
         mockResponse as Response,
         nextFunction
