@@ -9,6 +9,8 @@ interface User {
   profile_picture: string | null;
   is_active: boolean;
   created_at: Date;
+  is_banned: boolean;
+  suspension_end_date: string | null;
 }
 
 export const getAllUsersService = async (dto: GetAllUsersQueryDto) => {
@@ -29,7 +31,11 @@ export const getAllUsersService = async (dto: GetAllUsersQueryDto) => {
 
     return {
       message: 'User fetched successfully',
-      data: [user],
+      data: [{
+        ...user,
+        is_banned: user.is_banned ?? false,
+        suspension_end_date: user.suspension_end_date ?? null,
+      }],
       metadata: {
         last_time: user.created_at,
         remainingItems: 0,
@@ -48,6 +54,8 @@ export const getAllUsersService = async (dto: GetAllUsersQueryDto) => {
     profile_picture: user.profile_picture,
     is_active: user.is_active,
     created_at: user.created_at,
+    is_banned: user.is_banned ?? false,
+    suspension_end_date: user.suspension_end_date ?? null,
   }));
 
   const lastTime =

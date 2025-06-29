@@ -19,6 +19,8 @@ describe('getAllUsersService', () => {
       profile_picture: null,
       is_active: true,
       created_at: new Date('2025-06-20T00:00:00Z'),
+      is_banned: false,
+      suspension_end_date: '',
     },
     {
       id: 'user-2',
@@ -28,6 +30,8 @@ describe('getAllUsersService', () => {
       profile_picture: null,
       is_active: true,
       created_at: new Date('2025-06-22T00:00:00Z'),
+      is_banned: false,
+      suspension_end_date: '',
     },
   ];
 
@@ -50,6 +54,7 @@ describe('getAllUsersService', () => {
 
     expect(result.message).toBe('All users fetched successfully');
     expect(result.data).toHaveLength(2);
+    expect(result.data).toEqual(sampleUsers);
     expect(result.metadata).toEqual({
       last_time: sampleUsers[1].created_at,
       remainingItems: 4,
@@ -90,7 +95,13 @@ describe('getAllUsersService', () => {
 
     expect(mockGetUserByUsernameRepository).toHaveBeenCalledWith('testuser');
     expect(result.message).toBe('User fetched successfully');
-    expect(result.data).toEqual([sampleUsers[0]]);
+    expect(result.data).toEqual([
+      {
+        ...sampleUsers[0],
+        is_banned: false,
+        suspension_end_date: '',
+      },
+    ]);
     expect(result.metadata).toEqual({
       last_time: sampleUsers[0].created_at,
       remainingItems: 0,
