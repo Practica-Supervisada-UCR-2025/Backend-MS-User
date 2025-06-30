@@ -115,10 +115,14 @@ export const getAllUsersRepository = async (dto: GetAllUsersQueryDto) => {
   const { created_after, limit } = dto;
 
   const dataQuery = `
-    SELECT id, email, full_name, username, profile_picture, is_active, created_at, auth_id
-    FROM users
-    WHERE is_active = true AND created_at > $1
-    ORDER BY created_at ASC
+    SELECT 
+      u.id, u.email, u.full_name, u.username, u.profile_picture, u.is_active, u.created_at, u.auth_id,
+      CASE WHEN us.id IS NOT NULL AND us.end_date > NOW() THEN true ELSE false END AS is_banned,
+      CASE WHEN us.id IS NOT NULL AND us.end_date > NOW() THEN us.end_date ELSE NULL END AS suspension_end_date
+    FROM users u
+    LEFT JOIN user_suspensions us ON u.id = us.user_id AND us.end_date > NOW()
+    WHERE u.is_active = true AND u.created_at > $1
+    ORDER BY u.created_at ASC
     LIMIT $2
   `;
 
@@ -134,7 +138,11 @@ export const getAllUsersRepository = async (dto: GetAllUsersQueryDto) => {
   const [dataResult, countResult] = await Promise.all([dataPromise, countPromise]);
 
   return {
-    users: dataResult.rows,
+    users: dataResult.rows.map(user => ({
+      ...user,
+      is_banned: Boolean(user.is_banned),
+      suspension_end_date: user.suspension_end_date || ''
+    })),
     totalRemaining: parseInt(countResult.rows[0].total, 10),
   };
 };

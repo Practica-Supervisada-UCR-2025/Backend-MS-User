@@ -19,7 +19,9 @@ describe('user.repository', () => {
       is_active: true,
       created_at: new Date('2025-06-15T00:00:00Z'),
       auth_id: 'auth123',
-    },
+      is_banned: false,
+      suspension_end_date: '',
+    }, 
     {
       id: 'user-2',
       email: 'another@ucr.ac.cr',
@@ -29,6 +31,8 @@ describe('user.repository', () => {
       is_active: true,
       created_at: new Date('2025-06-16T00:00:00Z'),
       auth_id: 'auth456',
+      is_banned: false,
+      suspension_end_date: '',
     },
   ];
 
@@ -55,8 +59,11 @@ describe('user.repository', () => {
       expect(result.totalRemaining).toBe(10);
 
       expect(db.query).toHaveBeenCalledTimes(2);
-      expect(db.query).toHaveBeenCalledWith(expect.stringContaining('SELECT id'), [dto.created_after, dto.limit]);
-      expect(db.query).toHaveBeenCalledWith(expect.stringContaining('SELECT COUNT'), [dto.created_after]);
+      const calls = (db.query as jest.Mock).mock.calls;
+      expect(calls[0][0]).toContain('SELECT');
+      expect(calls[0][1]).toEqual([dto.created_after, dto.limit]);
+      expect(calls[1][0]).toContain('SELECT COUNT');
+      expect(calls[1][1]).toEqual([dto.created_after]);
     });
   });
 
