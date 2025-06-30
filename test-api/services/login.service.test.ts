@@ -1,6 +1,6 @@
 // tests/services/auth.service.test.ts
 import { loginUserService, loginAdminService } from '../../src/features/users/services/login.service';
-import { UnauthorizedError, InternalServerError } from '../../src/utils/errors/api-error';
+import {UnauthorizedError, InternalServerError, ForbiddenError} from '../../src/utils/errors/api-error';
 import admin from '../../src/config/firebase';
 import jwt from 'jsonwebtoken';
 
@@ -12,6 +12,13 @@ jest.mock('../../src/features/users/repositories/user.repository', () => ({
 jest.mock('../../src/features/users/repositories/admin.repository', () => ({
   findByEmailAdmin: jest.fn()
 }));
+
+jest.mock('../../src/features/users/repositories/suspension.repository', () => ({
+  isUserSuspended: jest.fn()
+}));
+
+import { isUserSuspended } from '../../src/features/users/repositories/suspension.repository';
+
 
 // @ts-ignore
 const mockVerifyIdToken = admin.auth().verifyIdToken as jest.Mock;
@@ -77,6 +84,23 @@ describe('Auth Service', () => {
 
       await expect(loginUserService('valid-token')).rejects.toThrow(UnauthorizedError);
     });
+
+    it('should throw ForbiddenError if user is suspended', async () => {
+      mockVerifyIdToken.mockResolvedValueOnce({ email: 'user@ucr.ac.cr', uid: 'user123' });
+      (findByEmailUser as jest.Mock).mockResolvedValueOnce({ id: 'user123', email: 'user@ucr.ac.cr', is_active: true });
+      (isUserSuspended as jest.Mock).mockResolvedValueOnce(true);
+
+      try {
+        await loginUserService('valid-token');
+        fail('Expected ForbiddenError, but no error was thrown');
+      } catch (error: any) {
+        expect(error).toBeInstanceOf(ForbiddenError);
+        expect(error.message).toBe('Forbidden');
+        expect(error.details).toEqual(['User account is suspended']);
+        expect(error.details).toContain('User account is suspended');
+      }
+    });
+
   });
 
   describe('loginAdminService', () => {
