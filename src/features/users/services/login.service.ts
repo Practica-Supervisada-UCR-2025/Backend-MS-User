@@ -2,7 +2,8 @@
 import admin from '../../../config/firebase';
 import { findByEmailUser } from '../repositories/user.repository';
 import { findByEmailAdmin} from '../repositories/admin.repository';
-import { UnauthorizedError, ConflictError, InternalServerError } from '../../../utils/errors/api-error';
+import { isUserSuspended } from '../repositories/suspension.repository';
+import {UnauthorizedError, ConflictError, InternalServerError, ForbiddenError} from '../../../utils/errors/api-error';
 import { JwtService } from './jwt.service';
 
 export const loginUserService = async (firebaseToken: string) => {
@@ -33,6 +34,12 @@ export const loginUserService = async (firebaseToken: string) => {
       throw new UnauthorizedError('Unauthorized', ['Not registered user']);
     }
 
+    if (await isUserSuspended(existingUser.id)) {
+      throw new ForbiddenError('Forbidden', ['User account is suspended']);
+    }
+
+
+
     // Generate JWT token
     const jwtService = new JwtService();
     const token = jwtService.generateToken({
@@ -46,7 +53,7 @@ export const loginUserService = async (firebaseToken: string) => {
     };
   } catch (error) {
     console.error('Error in loginUserService:', error);
-    if (error instanceof UnauthorizedError) {
+    if (error instanceof UnauthorizedError || error instanceof ForbiddenError) {
       throw error;
     }
     throw new InternalServerError('Internal server error');
@@ -96,7 +103,7 @@ export const loginAdminService = async (firebaseToken: string) => {
     };
   } catch (error) {
     console.error('Error in loginAdminService:', error);
-    if (error instanceof UnauthorizedError) {
+    if (error instanceof UnauthorizedError || error instanceof ForbiddenError) {
       throw error;
     }
     throw new InternalServerError('Internal server error');
